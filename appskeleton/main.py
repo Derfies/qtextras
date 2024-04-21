@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import (
@@ -13,14 +14,15 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from document import Document
-from widgetmanager import WidgetManager
+from appskeleton.document import Document
+from appskeleton.widgetmanager import WidgetManager
 
 
 logger = logging.getLogger(__name__)
 
 
-APP_NAME = 'Application Skeleton'
+DEFAULT_COMPANY_NAME = 'Enron'
+DEFAULT_APP_NAME = 'Application Skeleton'
 
 
 class AppSkeleton(QApplication):
@@ -30,25 +32,31 @@ class AppSkeleton(QApplication):
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, company_name: str, app_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.app_name = app_name
 
         self._create_menu_bar()
         self._create_actions()
         self._add_actions_to_menu_bar()
         self._connect_actions()
 
-        self._widget_manager = WidgetManager('mycompany', 'myapp')
-        self._widget_manager.register_widget('main window', self)
+        self._widget_manager = WidgetManager(company_name, self.app_name)
+        self._widget_manager.register_widget('main_window', self)
 
         QApplication.instance().update.connect(self.on_update)
 
         # Default state is an empty document.
-        self.create_document()
-        self.on_update()
+        self.doc = self.create_document()
+        self.doc.on_refresh()
 
-    def on_test(self):
-        print('her')
+    @property
+    def icons_path(self) -> Path:
+        return Path(__file__).parent.joinpath('data', 'icons')
+
+    def get_icon(self, file_name: str) -> QIcon:
+        return QIcon(str(self.icons_path.joinpath(file_name)))
 
     def showEvent(self, event):
         self._widget_manager.load_settings()
@@ -64,15 +72,15 @@ class MainWindow(QMainWindow):
     def _create_actions(self):
 
         # File actions.
-        self.new_action = QAction(QIcon('data/icons/document.png'), '&New', self)
-        self.open_action = QAction(QIcon('data/icons/folder-open.png'), '&Open...', self)
-        self.save_action = QAction(QIcon('data/icons/disk.png'), '&Save', self)
-        self.save_as_action = QAction(QIcon('data/icons/disk.png'), '&Save As...', self)
-        self.exit_action = QAction(QIcon('data/icons/door-open-out.png'), '&Exit', self)
+        self.new_action = QAction(self.get_icon('document.png'), '&New', self)
+        self.open_action = QAction(self.get_icon('folder-open.png'), '&Open...', self)
+        self.save_action = QAction(self.get_icon('disk.png'), '&Save', self)
+        self.save_as_action = QAction(self.get_icon('disk.png'), '&Save As...', self)
+        self.exit_action = QAction(self.get_icon('door-open-out.png'), '&Exit', self)
 
         # Edit actions.
-        self.undo_action = QAction(QIcon('data/icons/arrow-turn.png'), '&Undo', self)
-        self.redo_action = QAction(QIcon('data/icons/arrow-turn-180-left.png'), '&Redo', self)
+        self.undo_action = QAction(self.get_icon('arrow-turn.png'), '&Undo', self)
+        self.redo_action = QAction(self.get_icon('arrow-turn-180-left.png'), '&Redo', self)
 
     def _add_actions_to_menu_bar(self):
 
@@ -114,7 +122,7 @@ class MainWindow(QMainWindow):
     def on_new(self):
         if not self._check_for_save():
             return
-        self.create_document()
+        self.doc = self.create_document()
         self.doc.on_refresh()
 
     def on_open(self, evt, file_path: str = None):
@@ -123,7 +131,7 @@ class MainWindow(QMainWindow):
         if file_path is None:
             file_path, file_format = QFileDialog.getOpenFileName()
         if file_path:
-            self.create_document(file_path)
+            self.doc = self.create_document(file_path)
             self.doc.load()
 
     def on_save(self, save_as: bool = False):
@@ -138,7 +146,7 @@ class MainWindow(QMainWindow):
         self.on_save(True)
 
     def on_update(self):
-        title = ''.join([APP_NAME, ' - ', self.doc.title])
+        title = ''.join([self.app_name, ' - ', self.doc.title])
         if self.doc.dirty:
             title += ' *'
         self.setWindowTitle(title)
@@ -147,12 +155,12 @@ class MainWindow(QMainWindow):
         QApplication.quit()
 
     def create_document(self, file_path: str = None):
-        self.doc = Document(file_path, None)
+        return Document(file_path, None)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     app = AppSkeleton(sys.argv)
-    window = MainWindow()
+    window = MainWindow(DEFAULT_COMPANY_NAME, DEFAULT_APP_NAME)
     window.show()
     sys.exit(app.exec())

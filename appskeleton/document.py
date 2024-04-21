@@ -23,7 +23,7 @@ class Document:
             return 'untitled'
 
     def load(self):
-        self.contents.load(self.file_path)
+        logger.debug(f'Load: {self.file_path}')
         self.on_refresh()
 
     def save(self, file_path: str = None):

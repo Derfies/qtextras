@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
 
     def _connect_actions(self):
         self.new_action.triggered.connect(self.on_new)
+        self.open_action.triggered.connect(self.on_open)
         self.save_action.triggered.connect(self.on_save)
         self.save_as_action.triggered.connect(self.on_save_as)
         self.exit_action.triggered.connect(self.on_exit)
@@ -105,7 +106,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.No,
             )
             if result == QMessageBox.StandardButton.Yes:
-                self.on_save(None)
+                self.on_save()
             elif result == QMessageBox.StandardButton.Cancel:
                 return False
         return True
@@ -116,7 +117,16 @@ class MainWindow(QMainWindow):
         self.create_document()
         self.doc.on_refresh()
 
-    def on_save(self, save_as=False):
+    def on_open(self, evt, file_path: str = None):
+        if not self._check_for_save():
+            return
+        if file_path is None:
+            file_path, file_format = QFileDialog.getOpenFileName()
+        if file_path:
+            self.create_document(file_path)
+            self.doc.load()
+
+    def on_save(self, save_as: bool = False):
         if self.doc.file_path is None or save_as:
             file_path, file_format = QFileDialog.getSaveFileName()
             if not file_path:

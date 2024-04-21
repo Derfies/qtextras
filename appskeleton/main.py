@@ -25,9 +25,9 @@ DEFAULT_COMPANY_NAME = 'Enron'
 DEFAULT_APP_NAME = 'Application Skeleton'
 
 
-class AppSkeleton(QApplication):
+class Application(QApplication):
 
-    update = pyqtSignal()
+    update = pyqtSignal(Document)
 
 
 class MainWindow(QMainWindow):
@@ -55,8 +55,9 @@ class MainWindow(QMainWindow):
     def icons_path(self) -> Path:
         return Path(__file__).parent.joinpath('data', 'icons')
 
-    def get_icon(self, file_name: str) -> QIcon:
-        return QIcon(str(self.icons_path.joinpath(file_name)))
+    def get_icon(self, file_name: str, icons_path: Path = None) -> QIcon:
+        icons_path = icons_path or self.icons_path
+        return QIcon(str(icons_path.joinpath(file_name)))
 
     def showEvent(self, event):
         self._widget_manager.load_settings()
@@ -125,7 +126,7 @@ class MainWindow(QMainWindow):
         self.doc = self.create_document()
         self.doc.on_refresh()
 
-    def on_open(self, evt, file_path: str = None):
+    def on_open(self, event, file_path: str = None):
         if not self._check_for_save():
             return
         if file_path is None:
@@ -152,6 +153,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
 
     def on_exit(self):
+        if not self._check_for_save():
+            return
         QApplication.quit()
 
     def create_document(self, file_path: str = None):
@@ -160,7 +163,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app = AppSkeleton(sys.argv)
+    app = Application(sys.argv)
     window = MainWindow(DEFAULT_COMPANY_NAME, DEFAULT_APP_NAME)
     window.show()
     sys.exit(app.exec())

@@ -13,7 +13,7 @@ class WidgetManager:
         self._settings = QSettings(company_name, app_name)
         self._widgets = {}
 
-        logger.debug(f'Widget settings file: {self._settings.fileName()}')
+        logger.debug(f'Loading widget settings file: {self._settings.fileName()}')
 
     def register_widget(self, name: str, widget: QWidget):
         self._widgets[name] = widget
@@ -22,7 +22,7 @@ class WidgetManager:
         for key in self._settings.allKeys():
             value = self._settings.value(key)
             name, param = key.split('/')
-            logger.debug(f'Loading widget: {name} setting: {value}')
+            logger.debug(f'Loading widget settings: {name} setting: {value}')
             if param == 'rect':
                 self._widgets[name].setGeometry(value)
 

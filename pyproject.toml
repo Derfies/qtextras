@@ -6,8 +6,9 @@ authors = ["Derfies <Derfies@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-pyqt6 = "^6.6.1"
+python = "~3.10"
+pyside6 = "^6.7.0"
+pyqtdarktheme = "^2.1.0"
 
 
 [build-system]

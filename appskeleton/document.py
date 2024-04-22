@@ -1,7 +1,8 @@
 import logging
 import os
 
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtCore import QCoreApplication
+from PySide6.QtWidgets import QApplication
 
 from appskeleton.contentbase import ContentBase
 
@@ -15,6 +16,11 @@ class Document:
         self.file_path = file_path
         self.content = content
         self.dirty = False
+        self.selection = []
+
+    @property
+    def app(self) -> QCoreApplication:
+        return QApplication.instance()
 
     @property
     def title(self):
@@ -36,8 +42,11 @@ class Document:
         self.on_refresh()
 
     def on_refresh(self):
-        QApplication.instance().update.emit(self)
+        self.app.updated.emit(self)
 
     def on_modified(self):
         self.dirty = True
-        QApplication.instance().update.emit(self)
+        self.app.updated.emit(self)
+
+    def on_selection_modified(self):
+        self.app.selection_updated.emit(self)

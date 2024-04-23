@@ -16,7 +16,7 @@ class Document:
         self.file_path = file_path
         self.content = content
         self.dirty = False
-        self.selection = []
+        self._selection = []
 
     def app(self) -> QCoreApplication:
         return QApplication.instance()
@@ -28,24 +28,33 @@ class Document:
         else:
             return 'untitled'
 
+    @property
+    def selection(self):
+        return self._selection
+
+    @selection.setter
+    def selection(self, selection: list):
+        self._selection = selection
+        self.selection_modified()
+
     def load(self):
         logger.info(f'Loading content: {self.file_path}')
         self.content.load(self.file_path)
-        self.on_refresh()
+        self.refresh()
 
     def save(self, file_path: str = None):
         file_path = file_path or self.file_path
         logger.debug(f'Saving content: {file_path}')
         self.content.save(file_path)
         self.dirty = False
-        self.on_refresh()
+        self.refresh()
 
-    def on_refresh(self):
+    def refresh(self):
         self.app().updated.emit(self)
 
-    def on_modified(self):
+    def modified(self):
         self.dirty = True
         self.app().updated.emit(self)
 
-    def on_selection_modified(self):
+    def selection_modified(self):
         self.app().selection_updated.emit(self)

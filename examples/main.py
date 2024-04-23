@@ -56,7 +56,7 @@ class MainWindow(MainWindowBase):
         super().__init__(*args, **kwargs)
 
         self.refresh_button = QPushButton('Refresh')
-        self.refresh_button.clicked.connect(self.app().doc.on_refresh)
+        self.refresh_button.clicked.connect(self.app().doc.refresh)
 
         self.property_grid = PropertyGrid()
         self.property_grid.model().data_changed.connect(self.on_data_changed)
@@ -69,7 +69,7 @@ class MainWindow(MainWindowBase):
         self.window.set_layout(self.layout)
         self.set_central_widget(self.window)
 
-        self.app().doc.on_refresh()
+        self.app().doc.refresh()
 
     def create_document(self, file_path: str = None) -> Document:
         return Document(file_path, Content())
@@ -84,7 +84,7 @@ class MainWindow(MainWindowBase):
         action = SetAttribute(item.name(), item.new_value(), item._ref())
         self.app().action_manager.push(action)
         action()
-        self.app().doc.on_modified()
+        self.app().doc.modified()
 
 
 if __name__ == '__main__':

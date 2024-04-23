@@ -128,7 +128,7 @@ class MainWindow(QMainWindow):
         if not self._check_for_save():
             return
         self.app().doc = self.create_document()
-        self.app().doc.on_refresh()
+        self.app().doc.refresh()
 
     def on_open(self, event, file_path: str = None):
         if not self._check_for_save():

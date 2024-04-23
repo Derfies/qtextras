@@ -46,10 +46,12 @@ class SetAttribute(Edit):
 
     def undo(self):
         super().undo()
+        logger.info(f'Setting attribute: {self._ref()}, {self.name} -> {self.old_value}')
         setattr(self._ref(), self.name, self.old_value)
 
     def redo(self):
         super().redo()
+        logger.info(f'Setting attribute: {self._ref()}, {self.name} -> {self.value}')
         setattr(self._ref(), self.name, self.value)
 
 
@@ -64,21 +66,21 @@ class Manager:
 
     def undo(self):
         if not self.undos:
-            logger.info('No more undo')
+            logger.warning('Undo queue is empty')
         else:
             action = self.undos.pop()
             self.redos.append(action)
             action.undo()
-            self.app().doc.on_modified()
+            self.app().doc.modified()
 
     def redo(self):
         if not self.redos:
-            logger.info('No more redo')
+            logger.warning('Redo queue is empty')
         else:
             action = self.redos.pop()
             self.undos.append(action)
             action.redo()
-            self.app().doc.on_modified()
+            self.app().doc.modified()
 
     def reset_undo(self):
         while self.undos:

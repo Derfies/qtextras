@@ -18,7 +18,6 @@ class Document:
         self.dirty = False
         self.selection = []
 
-    @property
     def app(self) -> QCoreApplication:
         return QApplication.instance()
 
@@ -42,11 +41,11 @@ class Document:
         self.on_refresh()
 
     def on_refresh(self):
-        self.app.updated.emit(self)
+        self.app().updated.emit(self)
 
     def on_modified(self):
         self.dirty = True
-        self.app.updated.emit(self)
+        self.app().updated.emit(self)
 
     def on_selection_modified(self):
-        self.app.selection_updated.emit(self)
+        self.app().selection_updated.emit(self)

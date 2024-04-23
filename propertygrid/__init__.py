@@ -1,0 +1,1 @@
+# Based on https://github.com/wizath/pyqt-propertyeditor/tree/master

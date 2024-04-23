@@ -4,9 +4,9 @@ from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 
-from appskeleton.application import Application
-from appskeleton.document import Document
-from appskeleton.widgetmanager import WidgetManager
+from applicationframework.application import Application
+from applicationframework.document import Document
+from applicationframework.widgetmanager import WidgetManager
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case

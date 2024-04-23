@@ -8,11 +8,11 @@ from PySide6.QtCore import QModelIndex, Qt
 from PySide6.QtGui import QColor, QColorConstants
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
-from appskeleton.actions import SetAttribute
-from appskeleton.application import Application
-from appskeleton.contentbase import ContentBase
-from appskeleton.document import Document
-from appskeleton.mainwindow import MainWindow as MainWindowBase
+from applicationframework.actions import SetAttribute
+from applicationframework.application import Application
+from applicationframework.contentbase import ContentBase
+from applicationframework.document import Document
+from applicationframework.mainwindow import MainWindow as MainWindowBase
 from propertygrid.widget import Widget as PropertyGrid
 
 # noinspection PyUnresolvedReferences
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_COMPANY_NAME = 'Enron'
-DEFAULT_APP_NAME = 'Application Skeleton'
+DEFAULT_APP_NAME = 'Application Framework'
 
 
 class EnumValues(Enum):

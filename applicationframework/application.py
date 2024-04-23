@@ -1,8 +1,8 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QApplication
 
-from appskeleton.actions import Manager as ActionManager
-from appskeleton.document import Document
+from applicationframework.actions import Manager as ActionManager
+from applicationframework.document import Document
 
 
 class Application(QApplication):

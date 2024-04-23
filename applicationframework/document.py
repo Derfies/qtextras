@@ -4,7 +4,7 @@ import os
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
-from appskeleton.contentbase import ContentBase
+from applicationframework.contentbase import ContentBase
 
 
 logger = logging.getLogger(__name__)

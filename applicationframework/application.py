@@ -1,7 +1,8 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QApplication
 
-from appskeleton.document import Document
+from applicationframework.actions import Manager as ActionManager
+from applicationframework.document import Document
 
 
 class Application(QApplication):
@@ -13,3 +14,4 @@ class Application(QApplication):
         super().__init__(*args, **kwargs)
 
         self.doc = None
+        self.action_manager = ActionManager()

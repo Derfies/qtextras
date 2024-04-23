@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pyqt6-app-skeleton"
+name = "qtextras"
 version = "0.1.0"
 description = ""
 authors = ["Derfies <Derfies@users.noreply.github.com>"]
@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.10"
-pyside6 = "^6.7.0"
+pyside6 = "6.6.3.1"
 pyqtdarktheme = "^2.1.0"
 
 

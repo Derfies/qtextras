@@ -4,8 +4,9 @@ from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 
-from appskeleton.document import Document
-from appskeleton.widgetmanager import WidgetManager
+from applicationframework.application import Application
+from applicationframework.document import Document
+from applicationframework.widgetmanager import WidgetManager
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -18,22 +19,19 @@ class MainWindow(QMainWindow):
 
         self.app_name = app_name
 
-        self._create_menu_bar()
-        self._create_actions()
-        self._connect_actions()
-        self._add_actions_to_menu_bar()
+        self.create_actions()
+        self.connect_actions()
+        self.create_menu_bar()
 
-        self._widget_manager = WidgetManager(company_name, self.app_name)
-        self._widget_manager.register_widget('main_window', self)
+        self.widget_manager = WidgetManager(company_name, self.app_name)
+        self.widget_manager.register_widget('main_window', self)
 
-        self.app.updated.connect(self.on_update)
+        self.app().updated.connect(self.on_update)
 
         # Default state is an empty document.
-        self.app.doc = self.create_document()
-        self.app.doc.on_refresh()
+        self.app().doc = self.create_document()
 
-    @property
-    def app(self) -> QCoreApplication:
+    def app(self) -> Application:
         return QApplication.instance()
 
     @property
@@ -44,18 +42,27 @@ class MainWindow(QMainWindow):
         icons_path = icons_path or self.icons_path
         return QIcon(str(icons_path.joinpath(file_name)))
 
-    def show_event(self, event):
-        self._widget_manager.load_settings()
+    def create_document(self, file_path: str = None) -> Document:
+        return Document(file_path, None)
 
-    def close_event(self, event):
-        self._widget_manager.save_settings()
-
-    def _create_menu_bar(self):
+    def create_menu_bar(self):
         menu_bar = self.menu_bar()
-        self.file_menu = menu_bar.add_menu('&File')
-        self.edit_menu = menu_bar.add_menu('&Edit')
 
-    def _create_actions(self):
+        # File actions.
+        self.file_menu = menu_bar.add_menu('&File')
+        self.file_menu.add_action(self.new_action)
+        self.file_menu.add_action(self.open_action)
+        self.file_menu.add_action(self.save_action)
+        self.file_menu.add_action(self.save_as_action)
+        self.file_menu.add_separator()
+        self.file_menu.add_action(self.exit_action)
+
+        # Edit actions.
+        self.edit_menu = menu_bar.add_menu('&Edit')
+        self.edit_menu.add_action(self.undo_action)
+        self.edit_menu.add_action(self.redo_action)
+
+    def create_actions(self):
 
         # File actions.
         self.new_action = QAction(self.get_icon('document.png'), '&New', self)
@@ -65,10 +72,10 @@ class MainWindow(QMainWindow):
         self.exit_action = QAction(self.get_icon('door-open-out.png'), '&Exit', self)
 
         # Edit actions.
-        self.undo_action = QAction(self.get_icon('arrow-turn.png'), '&Undo', self)
-        self.redo_action = QAction(self.get_icon('arrow-turn-180-left.png'), '&Redo', self)
+        self.undo_action = QAction(self.get_icon('arrow-turn-180-left.png'), '&Undo', self)
+        self.redo_action = QAction(self.get_icon('arrow-turn.png'), '&Redo', self)
 
-    def _connect_actions(self):
+    def connect_actions(self):
 
         # File actions.
         self.new_action.triggered.connect(self.on_new)
@@ -77,23 +84,33 @@ class MainWindow(QMainWindow):
         self.save_as_action.triggered.connect(self.on_save_as)
         self.exit_action.triggered.connect(self.on_exit)
 
-    def _add_actions_to_menu_bar(self):
+        # Edit actions.
+        self.undo_action.triggered.connect(self.app().action_manager.undo)
+        self.redo_action.triggered.connect(self.app().action_manager.redo)
 
-        # File actions.
-        self.file_menu.add_action(self.new_action)
-        self.file_menu.add_action(self.open_action)
-        self.file_menu.add_action(self.save_action)
-        self.file_menu.add_action(self.save_as_action)
-        self.file_menu.add_separator()
-        self.file_menu.add_action(self.exit_action)
+    def update_actions(self):
 
         # Edit actions.
-        self.edit_menu.add_action(self.undo_action)
-        self.edit_menu.add_action(self.redo_action)
+        undo_enabled = bool(self.app().action_manager.undos)
+        self.undo_action.set_enabled(undo_enabled)
+        redo_enabled = bool(self.app().action_manager.redos)
+        self.redo_action.set_enabled(redo_enabled)
 
-    def _check_for_save(self):
-        if self.app.doc.dirty:
-            msg = f'The document "{self.app.doc.title}" was modified after last save.\nSave changes before continuing?'
+    def update_window_title(self):
+        title = ''.join([self.app_name, ' - ', self.app().doc.title])
+        if self.app().doc.dirty:
+            title += ' *'
+        self.set_window_title(title)
+
+    def show_event(self, event):
+        self.widget_manager.load_settings()
+
+    def close_event(self, event):
+        self.widget_manager.save_settings()
+
+    def _check_for_save(self) -> bool:
+        if self.app().doc.dirty:
+            msg = f'The document "{self.app().doc.title}" was modified after last save.\nSave changes before continuing?'
             result = QMessageBox.warning(
                 self,
                 'Save Changes?',
@@ -110,8 +127,8 @@ class MainWindow(QMainWindow):
     def on_new(self):
         if not self._check_for_save():
             return
-        self.app.doc = self.create_document()
-        self.app.doc.on_refresh()
+        self.app().doc = self.create_document()
+        self.app().doc.on_refresh()
 
     def on_open(self, event, file_path: str = None):
         if not self._check_for_save():
@@ -119,30 +136,25 @@ class MainWindow(QMainWindow):
         if file_path is None:
             file_path, file_format = QFileDialog.get_open_file_name()
         if file_path:
-            self.app.doc = self.create_document(file_path)
-            self.app.doc.load()
+            self.app().doc = self.create_document(file_path)
+            self.app().doc.load()
 
     def on_save(self, save_as: bool = False):
-        if self.app.doc.file_path is None or save_as:
+        if self.app().doc.file_path is None or save_as:
             file_path, file_format = QFileDialog.get_save_file_name()
             if not file_path:
                 return
-            self.app.doc.file_path = file_path
-        self.app.doc.save()
+            self.app().doc.file_path = file_path
+        self.app().doc.save()
 
     def on_save_as(self):
         self.on_save(True)
 
-    def on_update(self):
-        title = ''.join([self.app_name, ' - ', self.app.doc.title])
-        if self.app.doc.dirty:
-            title += ' *'
-        self.set_window_title(title)
+    def on_update(self, document: Document):
+        self.update_window_title()
+        self.update_actions()
 
     def on_exit(self):
         if not self._check_for_save():
             return
         QApplication.quit()
-
-    def create_document(self, file_path: str = None):
-        return Document(file_path, None)

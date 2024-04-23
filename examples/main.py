@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import qdarktheme
-from PySide6.QtCore import QModelIndex, Qt
+from PySide6.QtCore import QModelIndex
 from PySide6.QtGui import QColor, QColorConstants
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 

@@ -178,7 +178,7 @@ class EnumProperty(PropertyBase):
         return editor
 
     def get_editor_data(self, editor: QSpinBox):
-        return editor.current_text()
+        return self.enum(editor.current_text())
 
     def set_editor_data(self, editor: QComboBox):
         editor.set_current_text(str(self.value().value))

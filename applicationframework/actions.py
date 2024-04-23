@@ -29,6 +29,10 @@ class ActionBase(metaclass=abc.ABCMeta):
 class Edit(ActionBase):
 
     def __init__(self, obj):
+
+        # TODO: Maybe don't use weak ref, as certain actions that remove an
+        # object (and thus result in it being garbage collected) are never
+        # retrievable.
         self._ref = weakref.ref(obj)
 
 

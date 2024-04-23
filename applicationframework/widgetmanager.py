@@ -1,7 +1,7 @@
 import logging
 
 from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QSplitter, QWidget
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -28,9 +28,13 @@ class WidgetManager:
             logger.debug(f'Loading widget settings: {name} setting: {value}')
             if param == 'rect':
                 self._widgets[name].set_geometry(value)
+            elif param == 'splitter_settings':
+                self._widgets[name].restore_state(value)
 
     def save_settings(self):
         for name, widget in self._widgets.items():
             self._settings.begin_group(name)
             self._settings.set_value('rect', widget.geometry())
+            if isinstance(widget, QSplitter):
+                self._settings.set_value('splitter_settings', widget.save_state())
             self._settings.end_group()

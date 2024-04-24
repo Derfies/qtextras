@@ -1,6 +1,5 @@
 import abc
 import logging
-import weakref
 
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
@@ -9,7 +8,7 @@ from PySide6.QtWidgets import QApplication
 logger = logging.getLogger(__name__)
 
 
-class ActionBase(metaclass=abc.ABCMeta):
+class Base(metaclass=abc.ABCMeta):
 
     def __call__(self):
         self.redo()
@@ -26,14 +25,33 @@ class ActionBase(metaclass=abc.ABCMeta):
         pass
 
 
-class Edit(ActionBase):
+class Composite(Base):
+
+    def __init__(self, actions):
+        self.actions = actions
+
+    def undo(self):
+        for action in reversed(self.actions):
+            action.undo()
+
+    def redo(self):
+        for action in self.actions:
+            action.redo()
+
+    def destroy(self):
+        for action in self.actions:
+            action.destroy()
+
+
+class Edit(Base):
 
     def __init__(self, obj):
 
         # TODO: Maybe don't use weak ref, as certain actions that remove an
         # object (and thus result in it being garbage collected) are never
         # retrievable.
-        self._ref = weakref.ref(obj)
+        #self._ref = weakref.ref(obj)
+        self.obj = obj
 
 
 class SetAttribute(Edit):
@@ -42,17 +60,17 @@ class SetAttribute(Edit):
         super().__init__(*args, **kwargs)
         self.name = name
         self.value = value
-        self.old_value = getattr(self._ref(), name)
+        self.old_value = getattr(self.obj, name)
 
     def undo(self):
         super().undo()
-        logger.info(f'Setting attribute: {self._ref()}, {self.name} -> {self.old_value}')
-        setattr(self._ref(), self.name, self.old_value)
+        logger.info(f'Setting attribute: {self.obj}, {self.name} -> {self.old_value}')
+        setattr(self.obj, self.name, self.old_value)
 
     def redo(self):
         super().redo()
-        logger.info(f'Setting attribute: {self._ref()}, {self.name} -> {self.value}')
-        setattr(self._ref(), self.name, self.value)
+        logger.info(f'Setting attribute: {self.obj}, {self.name} -> {self.value}')
+        setattr(self.obj, self.name, self.value)
 
 
 class Manager:

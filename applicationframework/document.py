@@ -50,11 +50,14 @@ class Document:
         self.refresh()
 
     def refresh(self):
+        logger.debug(f'Emitting updated')
         self.app().updated.emit(self)
 
     def modified(self):
         self.dirty = True
+        logger.debug(f'Emitting updated')
         self.app().updated.emit(self)
 
     def selection_modified(self):
+        logger.debug(f'Emitting selection_modified')
         self.app().selection_updated.emit(self)

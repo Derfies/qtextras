@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QIcon, QAction, QKeySequence
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 
 from applicationframework.application import Application
@@ -21,6 +20,7 @@ class MainWindow(QMainWindow):
 
         self.create_actions()
         self.connect_actions()
+        self.connect_hotkeys()
         self.create_menu_bar()
 
         self.widget_manager = WidgetManager(company_name, self.app_name)
@@ -87,6 +87,10 @@ class MainWindow(QMainWindow):
         # Edit actions.
         self.undo_action.triggered.connect(self.app().action_manager.undo)
         self.redo_action.triggered.connect(self.app().action_manager.redo)
+
+    def connect_hotkeys(self):
+        self.undo_action.set_shortcut(QKeySequence('Ctrl+Z'))
+        self.redo_action.set_shortcut(QKeySequence('Ctrl+Shift+Z'))
 
     def update_actions(self):
 

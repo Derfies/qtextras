@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.widget_manager.register_widget('main_window', self)
 
         self.app().updated.connect(self.on_update)
+        self.app().selection_updated.connect(self.on_update)
 
         # Default state is an empty document.
         self.app().doc = self.create_document()
@@ -44,23 +45,6 @@ class MainWindow(QMainWindow):
 
     def create_document(self, file_path: str = None) -> Document:
         return Document(file_path, None)
-
-    def create_menu_bar(self):
-        menu_bar = self.menu_bar()
-
-        # File actions.
-        self.file_menu = menu_bar.add_menu('&File')
-        self.file_menu.add_action(self.new_action)
-        self.file_menu.add_action(self.open_action)
-        self.file_menu.add_action(self.save_action)
-        self.file_menu.add_action(self.save_as_action)
-        self.file_menu.add_separator()
-        self.file_menu.add_action(self.exit_action)
-
-        # Edit actions.
-        self.edit_menu = menu_bar.add_menu('&Edit')
-        self.edit_menu.add_action(self.undo_action)
-        self.edit_menu.add_action(self.redo_action)
 
     def create_actions(self):
 
@@ -96,6 +80,23 @@ class MainWindow(QMainWindow):
         # Edit actions.
         self.undo_action.set_shortcut(QKeySequence('Ctrl+Z'))
         self.redo_action.set_shortcut(QKeySequence('Ctrl+Shift+Z'))
+
+    def create_menu_bar(self):
+        menu_bar = self.menu_bar()
+
+        # File actions.
+        self.file_menu = menu_bar.add_menu('&File')
+        self.file_menu.add_action(self.new_action)
+        self.file_menu.add_action(self.open_action)
+        self.file_menu.add_action(self.save_action)
+        self.file_menu.add_action(self.save_as_action)
+        self.file_menu.add_separator()
+        self.file_menu.add_action(self.exit_action)
+
+        # Edit actions.
+        self.edit_menu = menu_bar.add_menu('&Edit')
+        self.edit_menu.add_action(self.undo_action)
+        self.edit_menu.add_action(self.redo_action)
 
     def update_actions(self):
 

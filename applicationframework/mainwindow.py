@@ -89,6 +89,11 @@ class MainWindow(QMainWindow):
         self.redo_action.triggered.connect(self.app().action_manager.redo)
 
     def connect_hotkeys(self):
+
+        # File actions.
+        self.save_action.set_shortcut(QKeySequence('Ctrl+S'))
+
+        # Edit actions.
         self.undo_action.set_shortcut(QKeySequence('Ctrl+Z'))
         self.redo_action.set_shortcut(QKeySequence('Ctrl+Shift+Z'))
 
@@ -134,7 +139,7 @@ class MainWindow(QMainWindow):
         self.app().doc = self.create_document()
         self.app().doc.refresh()
 
-    def on_open(self, event, file_path: str = None):
+    def on_open(self, file_path: str = None):
         if not self._check_for_save():
             return
         if file_path is None:

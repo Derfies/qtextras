@@ -1,5 +1,6 @@
 import logging
 import os
+from enum import Flag, auto
 
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
@@ -8,6 +9,12 @@ from applicationframework.contentbase import ContentBase
 
 
 logger = logging.getLogger(__name__)
+
+
+class UpdateFlag(Flag):
+
+    MODIFIED = auto()
+    SELECTION = auto()
 
 
 class Document:
@@ -51,13 +58,13 @@ class Document:
 
     def refresh(self):
         logger.debug(f'Emitting updated')
-        self.app().updated.emit(self)
+        self.app().updated.emit(self, None)
 
     def modified(self):
         self.dirty = True
         logger.debug(f'Emitting updated')
-        self.app().updated.emit(self)
+        self.app().updated.emit(self, UpdateFlag.MODIFIED)
 
     def selection_modified(self):
         logger.debug(f'Emitting selection_modified')
-        self.app().selection_updated.emit(self)
+        self.app().selection_updated.emit(self, UpdateFlag.MODIFIED)

@@ -15,8 +15,7 @@ class WidgetManager:
     def __init__(self, company_name: str, app_name: str):
         self._settings = QSettings(company_name, app_name)
         self._widgets = {}
-
-        logger.debug(f'Loading widget settings file: {self._settings.file_name()}')
+        logger.debug(f'Settings file: {self._settings.file_name()}')
 
     def register_widget(self, name: str, widget: QWidget):
         self._widgets[name] = widget
@@ -25,7 +24,7 @@ class WidgetManager:
         for key in self._settings.all_keys():
             value = self._settings.value(key)
             name, param = key.split('/')
-            logger.debug(f'Loading widget settings: {name} setting: {value}')
+            logger.debug(f'Loading widget: {name} setting: {value}')
             if param == 'rect':
                 self._widgets[name].set_geometry(value)
             elif param == 'splitter_settings':

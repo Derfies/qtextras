@@ -13,6 +13,9 @@ class Base(metaclass=abc.ABCMeta):
     def __call__(self):
         self.redo()
 
+    def app(self) -> QCoreApplication:
+        return QApplication.instance()
+
     @abc.abstractmethod
     def undo(self):
         ...

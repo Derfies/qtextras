@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
         super().__init__(*args, **kwargs)
 
         self.app_name = app_name
+        self.app().updated.connect(self.update_event)
 
         self.create_actions()
         self.connect_actions()
@@ -25,9 +26,6 @@ class MainWindow(QMainWindow):
 
         self.widget_manager = WidgetManager(company_name, self.app_name)
         self.widget_manager.register_widget('main_window', self)
-
-        self.app().updated.connect(self.on_update)
-        self.app().selection_updated.connect(self.on_update)
 
         # Default state is an empty document.
         self.app().doc = self.create_document()
@@ -160,7 +158,7 @@ class MainWindow(QMainWindow):
     def on_save_as(self):
         self.on_save(True)
 
-    def on_update(self, document: Document):
+    def update_event(self, document: Document):
         self.update_window_title()
         self.update_actions()
 

@@ -8,7 +8,6 @@ from applicationframework.document import Document, UpdateFlag
 class Application(QApplication):
 
     updated = Signal(Document, UpdateFlag)
-    selection_updated = Signal(Document, UpdateFlag)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -74,8 +74,8 @@ class MainWindow(MainWindowBase):
     def create_document(self, file_path: str = None) -> Document:
         return Document(file_path, Content())
 
-    def on_update(self, document: Document):
-        super().on_update(document)
+    def update_event(self, document: Document):
+        super().update_event(document)
 
         self.property_grid.set_object(document.content)
 

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class UpdateFlag(Flag):
 
+    NONE = auto()
     MODIFIED = auto()
     SELECTION = auto()
 
@@ -45,7 +46,7 @@ class Document:
         self.selection_modified()
 
     def load(self):
-        logger.info(f'Loading content: {self.file_path}')
+        logger.debug(f'Loading content: {self.file_path}')
         self.content.load(self.file_path)
         self.refresh()
 
@@ -56,15 +57,16 @@ class Document:
         self.dirty = False
         self.refresh()
 
+    def _emit_updated(self, flags: UpdateFlag):
+        logger.debug(f'Emitting updated: {flags}')
+        self.app().updated.emit(self, flags)
+
     def refresh(self):
-        logger.debug(f'Emitting updated')
-        self.app().updated.emit(self, None)
+        self._emit_updated(UpdateFlag.NONE)
 
     def modified(self):
         self.dirty = True
-        logger.debug(f'Emitting updated')
-        self.app().updated.emit(self, UpdateFlag.MODIFIED)
+        self._emit_updated(UpdateFlag.MODIFIED)
 
     def selection_modified(self):
-        logger.debug(f'Emitting selection_modified')
-        self.app().selection_updated.emit(self, UpdateFlag.MODIFIED)
+        self._emit_updated(UpdateFlag.SELECTION)

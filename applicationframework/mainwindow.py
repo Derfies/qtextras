@@ -60,11 +60,11 @@ class MainWindow(QMainWindow):
     def connect_actions(self):
 
         # File actions.
-        self.new_action.triggered.connect(self.on_new)
-        self.open_action.triggered.connect(self.on_open)
-        self.save_action.triggered.connect(self.on_save)
-        self.save_as_action.triggered.connect(self.on_save_as)
-        self.exit_action.triggered.connect(self.on_exit)
+        self.new_action.triggered.connect(self.new_event)
+        self.open_action.triggered.connect(self.open_event)
+        self.save_action.triggered.connect(self.save_event)
+        self.save_as_action.triggered.connect(self.save_as_event)
+        self.exit_action.triggered.connect(self.exit_event)
 
         # Edit actions.
         self.undo_action.triggered.connect(self.app().action_manager.undo)
@@ -114,6 +114,8 @@ class MainWindow(QMainWindow):
         self.widget_manager.load_settings()
 
     def close_event(self, event):
+        if not self._check_for_save():
+            event.ignore()
         self.widget_manager.save_settings()
 
     def _check_for_save(self) -> bool:
@@ -127,27 +129,27 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.No,
             )
             if result == QMessageBox.StandardButton.Yes:
-                self.on_save()
+                self.save_event()
             elif result == QMessageBox.StandardButton.Cancel:
                 return False
         return True
 
-    def on_new(self):
+    def new_event(self):
         if not self._check_for_save():
             return
         self.app().doc = self.create_document()
         self.app().doc.refresh()
 
-    def on_open(self, file_path: str = None):
+    def open_event(self, file_path: str | None | bool = None):
         if not self._check_for_save():
             return
-        if file_path is None:
+        if not file_path:
             file_path, file_format = QFileDialog.get_open_file_name()
         if file_path:
             self.app().doc = self.create_document(file_path)
             self.app().doc.load()
 
-    def on_save(self, save_as: bool = False):
+    def save_event(self, save_as: bool = False):
         if self.app().doc.file_path is None or save_as:
             file_path, file_format = QFileDialog.get_save_file_name()
             if not file_path:
@@ -155,14 +157,14 @@ class MainWindow(QMainWindow):
             self.app().doc.file_path = file_path
         self.app().doc.save()
 
-    def on_save_as(self):
-        self.on_save(True)
+    def save_as_event(self):
+        self.save_event(True)
 
     def update_event(self, document: Document):
         self.update_window_title()
         self.update_actions()
 
-    def on_exit(self):
+    def exit_event(self):
         if not self._check_for_save():
             return
         QApplication.quit()

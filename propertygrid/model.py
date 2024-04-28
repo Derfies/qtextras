@@ -99,7 +99,7 @@ class Model(QAbstractItemModel):
     def add_property(self, property: PropertyBase):
         self._items.append(property)
 
-    def add_property_object(self, obj):
+    def add_property_object(self, obj: object):
 
         # TODO: This is the last part that feels a bit funky...
         properties = vars(obj)
@@ -127,5 +127,5 @@ class Model(QAbstractItemModel):
     def clear(self):
         self.begin_remove_rows(QModelIndex(), 0, self.row_count(self._root))
         self._root = PropertyBase('Root', None, None)
-        self._items = []
+        self._items.clear()
         self.end_remove_rows()

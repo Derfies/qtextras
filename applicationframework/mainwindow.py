@@ -4,7 +4,7 @@ from PySide6.QtGui import QIcon, QAction, QKeySequence
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 
 from applicationframework.application import Application
-from applicationframework.document import Document
+from applicationframework.document import Document, UpdateFlag
 from applicationframework.widgetmanager import WidgetManager
 
 # noinspection PyUnresolvedReferences
@@ -116,7 +116,9 @@ class MainWindow(QMainWindow):
     def close_event(self, event):
         if not self._check_for_save():
             event.ignore()
+            return False
         self.widget_manager.save_settings()
+        return True
 
     def _check_for_save(self) -> bool:
         if self.app().doc.dirty:
@@ -141,13 +143,14 @@ class MainWindow(QMainWindow):
         self.app().doc.refresh()
 
     def open_event(self, file_path: str | None | bool = None):
-        if not self._check_for_save():
-            return
-        if not file_path:
-            file_path, file_format = QFileDialog.get_open_file_name()
-        if file_path:
-            self.app().doc = self.create_document(file_path)
-            self.app().doc.load()
+        if self._check_for_save():
+            if not file_path:
+                file_path, file_format = QFileDialog.get_open_file_name()
+            if file_path:
+                self.app().doc = self.create_document(file_path)
+                self.app().doc.load()
+                return True
+        return False
 
     def save_event(self, save_as: bool = False):
         if self.app().doc.file_path is None or save_as:
@@ -160,7 +163,7 @@ class MainWindow(QMainWindow):
     def save_as_event(self):
         self.save_event(True)
 
-    def update_event(self, document: Document):
+    def update_event(self, doc: Document, flags: UpdateFlag):
         self.update_window_title()
         self.update_actions()
 

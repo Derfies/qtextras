@@ -205,3 +205,20 @@ class ColourProperty(PropertyBase):
 
     def set_editor_data(self, editor: QColorDialog):
         pass
+
+
+class ImageProperty(PropertyBase):
+
+    def decoration_role(self):
+        pixmap = QPixmap(26, 26)
+        #pixmap.fill(QC)
+        return QIcon(pixmap)
+
+    def create_editor(self, parent) -> QWidget | None:
+        return QColorDialog(self.value(), parent)
+
+    def get_editor_data(self, editor: QColorDialog):
+        return editor.current_color()
+
+    def set_editor_data(self, editor: QColorDialog):
+        pass

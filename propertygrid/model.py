@@ -2,13 +2,14 @@
 from enum import Enum
 
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QImage
 
 from propertygrid.properties import (
     BoolProperty,
     ColourProperty,
     EnumProperty,
     FloatProperty,
+    ImageProperty,
     IntProperty,
     PropertyBase,
     StringProperty,
@@ -118,6 +119,8 @@ class Model(QAbstractItemModel):
                 property_cls = EnumProperty
             elif isinstance(value, QColor):
                 property_cls = ColourProperty
+            elif isinstance(value, QImage):
+                property_cls = ImageProperty
             if property_cls is None:
                 logger.warning(f'Cannot resolve property type: {key} {value} {type(value)}')
                 continue

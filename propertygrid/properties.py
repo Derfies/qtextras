@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
     QDoubleSpinBox,
+    QFileDialog,
     QLineEdit,
     QSpinBox,
     QWidget,
@@ -210,15 +211,14 @@ class ColourProperty(PropertyBase):
 class ImageProperty(PropertyBase):
 
     def decoration_role(self):
-        pixmap = QPixmap(26, 26)
-        #pixmap.fill(QC)
+        pixmap = QPixmap(26, 26).from_image(self.value())
         return QIcon(pixmap)
 
     def create_editor(self, parent) -> QWidget | None:
-        return QColorDialog(self.value(), parent)
+        return QFileDialog(parent, option=QFileDialog.DontUseNativeDialog)
 
     def get_editor_data(self, editor: QColorDialog):
-        return editor.current_color()
+        return editor.selected_files()[0]
 
     def set_editor_data(self, editor: QColorDialog):
         pass

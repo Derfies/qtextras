@@ -1,7 +1,7 @@
 ﻿import weakref
 from enum import EnumMeta
 
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QIcon, QPixmap, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QColorDialog,
@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QWidget,
 )
+from propertygrid.types import FilePathQImage
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -211,14 +212,20 @@ class ColourProperty(PropertyBase):
 class ImageProperty(PropertyBase):
 
     def decoration_role(self):
-        pixmap = QPixmap(26, 26).from_image(self.value())
+        pixmap = QPixmap.from_image(self.value().data)
+        pixmap = pixmap.scaled(26, 26, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
         return QIcon(pixmap)
 
     def create_editor(self, parent) -> QWidget | None:
-        return QFileDialog(parent, option=QFileDialog.DontUseNativeDialog)
 
-    def get_editor_data(self, editor: QColorDialog):
-        return editor.selected_files()[0]
+        # TODO: Start in the location of the old image.
+        dialog = QFileDialog(parent, filter='PNG (*.png)')
+        dialog.set_file_mode(QFileDialog.FileMode.ExistingFile)
+        dialog.exec()
+        return dialog
+
+    def get_editor_data(self, editor: QFileDialog):
+        return FilePathQImage(editor.selected_files()[0])
 
     def set_editor_data(self, editor: QColorDialog):
         pass

@@ -23,7 +23,10 @@ class TypeDelegate(QItemDelegate):
 
     def set_model_data(self, editor: QWidget, model: Model, index: QModelIndex):
         item = index.internal_pointer()
+
+        # TODO: Might need to expose some way of signalling a dialog cancellation.
         item.set_new_value(editor)
+
         # TODO: Might be useful to have this set as part of property grid
         # constructor, ie having properties set in place might be useful.
         #item.set_model_data(editor)

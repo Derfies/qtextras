@@ -14,6 +14,7 @@ from propertygrid.properties import (
     PropertyBase,
     StringProperty,
 )
+from propertygrid.types import FilePathQImage
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -119,7 +120,7 @@ class Model(QAbstractItemModel):
                 property_cls = EnumProperty
             elif isinstance(value, QColor):
                 property_cls = ColourProperty
-            elif isinstance(value, QImage):
+            elif isinstance(value, FilePathQImage):
                 property_cls = ImageProperty
             if property_cls is None:
                 logger.warning(f'Cannot resolve property type: {key} {value} {type(value)}')

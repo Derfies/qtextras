@@ -25,7 +25,7 @@ class Base(metaclass=abc.ABCMeta):
         ...
 
     def destroy(self):
-        pass
+        ...
 
 
 class Composite(Base):
@@ -92,7 +92,7 @@ class Manager:
             action = self.undos.pop()
             self.redos.append(action)
             action.undo()
-            self.app().doc.modified()
+            self.app().doc.updated()
 
     def redo(self):
         if not self.redos:
@@ -101,7 +101,7 @@ class Manager:
             action = self.redos.pop()
             self.undos.append(action)
             action.redo()
-            self.app().doc.modified()
+            self.app().doc.updated()
 
     def reset_undo(self):
         while self.undos:

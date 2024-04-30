@@ -1,7 +1,7 @@
 import logging
 import sys
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, Flag
 
 import qdarktheme
 from PySide6.QtCore import QModelIndex
@@ -50,13 +50,18 @@ class Content(ContentBase):
         pass
 
 
+class UpdateFlag(Flag):
+
+    pass
+
+
 class MainWindow(MainWindowBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.refresh_button = QPushButton('Refresh')
-        self.refresh_button.clicked.connect(self.app().doc.refresh)
+        self.refresh_button.clicked.connect(self.app().doc.updated)
 
         self.property_grid = PropertyGrid()
         self.property_grid.model().data_changed.connect(self.on_data_changed)
@@ -69,22 +74,22 @@ class MainWindow(MainWindowBase):
         self.window.set_layout(self.layout)
         self.set_central_widget(self.window)
 
-        self.app().doc.refresh()
+        self.app().doc.updated(dirty=False)
 
     def create_document(self, file_path: str = None) -> Document:
-        return Document(file_path, Content())
+        return Document(file_path, Content(), UpdateFlag)
 
-    def update_event(self, document: Document):
-        super().update_event(document)
+    def update_event(self, doc: Document, flags: UpdateFlag):
+        super().update_event(doc, flags)
 
-        self.property_grid.set_object(document.content)
+        self.property_grid.set_object(doc.content)
 
     def on_data_changed(self, index: QModelIndex):
         item = index.internal_pointer()
         action = SetAttribute(item.name(), item.new_value(), item._ref())
         self.app().action_manager.push(action)
         action()
-        self.app().doc.modified()
+        self.app().doc.updated()
 
 
 if __name__ == '__main__':

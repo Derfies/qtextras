@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class Base(metaclass=abc.ABCMeta):
 
     def __call__(self):
-        self.redo()
+        return self.redo()
 
     def app(self) -> QCoreApplication:
         return QApplication.instance()
@@ -60,6 +60,9 @@ class Edit(Base):
 class SetAttribute(Edit):
 
     def __init__(self, name, value, *args, **kwargs):
+
+        # Should flags be in base edit class?
+        self.flags = kwargs.pop('flags', None)
         super().__init__(*args, **kwargs)
         self.name = name
         self.value = value
@@ -69,11 +72,13 @@ class SetAttribute(Edit):
         super().undo()
         logger.info(f'Setting attribute: {self.obj}, {self.name} -> {self.old_value}')
         setattr(self.obj, self.name, self.old_value)
+        return self.flags
 
     def redo(self):
         super().redo()
         logger.info(f'Setting attribute: {self.obj}, {self.name} -> {self.value}')
         setattr(self.obj, self.name, self.value)
+        return self.flags
 
 
 class Manager:
@@ -91,8 +96,7 @@ class Manager:
         else:
             action = self.undos.pop()
             self.redos.append(action)
-            action.undo()
-            self.app().doc.updated()
+            self.app().doc.updated(action.undo())
 
     def redo(self):
         if not self.redos:
@@ -100,8 +104,7 @@ class Manager:
         else:
             action = self.redos.pop()
             self.undos.append(action)
-            action.redo()
-            self.app().doc.updated()
+            self.app().doc.updated(action.redo())
 
     def reset_undo(self):
         while self.undos:

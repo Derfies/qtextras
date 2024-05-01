@@ -1,7 +1,9 @@
 from PySide6.QtGui import QImage
 
-# noinspection PyUnresolvedReferences
-from __feature__ import snake_case
+import sys
+if 'unittest' not in sys.modules.keys():
+    # noinspection PyUnresolvedReferences
+    from __feature__ import snake_case
 
 
 class FilePathQImage:

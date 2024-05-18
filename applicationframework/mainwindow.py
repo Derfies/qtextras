@@ -1,11 +1,12 @@
 from enum import Flag
 from pathlib import Path
 
-from PySide6.QtGui import QIcon, QAction, QKeySequence
-from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
+from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
 
 from applicationframework.application import Application
 from applicationframework.document import Document
+from applicationframework.openrecentmenu import OpenRecentMenu
 from applicationframework.widgetmanager import WidgetManager
 
 # noinspection PyUnresolvedReferences
@@ -19,6 +20,8 @@ class MainWindow(QMainWindow):
 
         self.app_name = app_name
         self.app().updated.connect(self.update_event)
+        self.open_recent_menu = OpenRecentMenu('&Open Recent', parent=self)
+        self.open_recent_menu.set_icon(self.get_icon('folder-open.png'))
 
         self.create_actions()
         self.connect_actions()
@@ -27,6 +30,7 @@ class MainWindow(QMainWindow):
 
         self.widget_manager = WidgetManager(company_name, self.app_name)
         self.widget_manager.register_widget('main_window', self)
+        self.widget_manager.register_widget('open_recent_menu', self.open_recent_menu)
 
         # Default state is an empty document.
         self.app().doc = self.create_document()
@@ -84,6 +88,7 @@ class MainWindow(QMainWindow):
         self.file_menu = menu_bar.add_menu('&File')
         self.file_menu.add_action(self.new_action)
         self.file_menu.add_action(self.open_action)
+        self.file_menu.add_menu(self.open_recent_menu)
         self.file_menu.add_action(self.save_action)
         self.file_menu.add_action(self.save_as_action)
         self.file_menu.add_separator()
@@ -98,6 +103,9 @@ class MainWindow(QMainWindow):
         raise NotImplementedError
 
     def update_actions(self):
+
+        # File actions.
+        self.open_recent_menu.update_actions()
 
         # Edit actions.
         undo_enabled = bool(self.app().action_manager.undos)
@@ -145,12 +153,14 @@ class MainWindow(QMainWindow):
         return True
 
     def open_event(self, file_path: str | None | bool = None):
+
         # TODO: Still don't like this func sig. Magically populates with 'False'
         # when triggered.
         if self.check_for_save():
             if not file_path:
                 file_path, file_format = QFileDialog.get_open_file_name()
             if file_path:
+                self.open_recent_menu.add_file_path(file_path)
                 self.app().doc = self.create_document(file_path)
                 self.app().doc.load()
                 return True

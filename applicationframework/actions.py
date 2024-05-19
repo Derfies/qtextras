@@ -1,5 +1,6 @@
 import abc
 import logging
+from enum import Flag
 
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
@@ -30,16 +31,19 @@ class Base(metaclass=abc.ABCMeta):
 
 class Composite(Base):
 
-    def __init__(self, actions):
+    def __init__(self, actions, flags: Flag | None = None):
         self.actions = actions
+        self.flags = flags
 
     def undo(self):
         for action in reversed(self.actions):
             action.undo()
+        return self.flags
 
     def redo(self):
         for action in self.actions:
             action.redo()
+        return self.flags
 
     def destroy(self):
         for action in self.actions:
@@ -59,14 +63,14 @@ class Edit(Base):
 
 class SetAttribute(Edit):
 
-    def __init__(self, name, value, *args, **kwargs):
+    def __init__(self, name, value, *args, flags: Flag | None = None):
 
         # Should flags be in base edit class?
-        self.flags = kwargs.pop('flags', None)
-        super().__init__(*args, **kwargs)
+        super().__init__(*args)
         self.name = name
         self.value = value
         self.old_value = getattr(self.obj, name)
+        self.flags = flags
 
     def undo(self):
         super().undo()

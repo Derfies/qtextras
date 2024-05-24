@@ -20,6 +20,8 @@ class MainWindow(QMainWindow):
 
         self.app_name = app_name
         self.app().updated.connect(self.update_event)
+
+        # TODO: Move to create_menubar?
         self.open_recent_menu = OpenRecentMenu('&Open Recent', parent=self)
         self.open_recent_menu.set_icon(self.get_icon('folder-open.png'))
 
@@ -84,7 +86,7 @@ class MainWindow(QMainWindow):
     def create_menu_bar(self):
         menu_bar = self.menu_bar()
 
-        # File actions.
+        # File menu.
         self.file_menu = menu_bar.add_menu('&File')
         self.file_menu.add_action(self.new_action)
         self.file_menu.add_action(self.open_action)
@@ -94,7 +96,7 @@ class MainWindow(QMainWindow):
         self.file_menu.add_separator()
         self.file_menu.add_action(self.exit_action)
 
-        # Edit actions.
+        # Edit menu.
         self.edit_menu = menu_bar.add_menu('&Edit')
         self.edit_menu.add_action(self.undo_action)
         self.edit_menu.add_action(self.redo_action)

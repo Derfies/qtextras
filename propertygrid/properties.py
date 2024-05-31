@@ -1,4 +1,5 @@
-﻿import weakref
+﻿import sys
+import weakref
 from enum import EnumMeta
 
 from PySide6.QtGui import QIcon, QPixmap, Qt
@@ -14,8 +15,10 @@ from PySide6.QtWidgets import (
 )
 from propertygrid.types import FilePathQImage
 
-# noinspection PyUnresolvedReferences
-from __feature__ import snake_case
+if 'unittest' not in sys.modules.keys():
+
+    # noinspection PyUnresolvedReferences
+    from __feature__ import snake_case
 
 
 class PropertyBase:

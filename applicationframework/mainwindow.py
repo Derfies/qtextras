@@ -60,6 +60,8 @@ class MainWindow(QMainWindow):
         # Edit actions.
         self.undo_action = QAction(self.get_icon('arrow-turn-180-left.png'), '&Undo', self)
         self.redo_action = QAction(self.get_icon('arrow-turn.png'), '&Redo', self)
+        self.copy_action = QAction(self.get_icon('document-copy.png'), '&Copy', self)
+        self.paste_action = QAction(self.get_icon('clipboard-paste.png'), '&Paste', self)
 
     def connect_actions(self):
 
@@ -73,6 +75,8 @@ class MainWindow(QMainWindow):
         # Edit actions.
         self.undo_action.triggered.connect(self.app().action_manager.undo)
         self.redo_action.triggered.connect(self.app().action_manager.redo)
+        self.copy_action.triggered.connect(self.copy_event)
+        self.paste_action.triggered.connect(self.paste_event)
 
     def connect_hotkeys(self):
 
@@ -82,6 +86,8 @@ class MainWindow(QMainWindow):
         # Edit actions.
         self.undo_action.set_shortcut(QKeySequence('Ctrl+Z'))
         self.redo_action.set_shortcut(QKeySequence('Ctrl+Shift+Z'))
+        self.copy_action.set_shortcut(QKeySequence('Ctrl+C'))
+        self.paste_action.set_shortcut(QKeySequence('Ctrl+V'))
 
     def create_menu_bar(self):
         menu_bar = self.menu_bar()
@@ -100,6 +106,9 @@ class MainWindow(QMainWindow):
         self.edit_menu = menu_bar.add_menu('&Edit')
         self.edit_menu.add_action(self.undo_action)
         self.edit_menu.add_action(self.redo_action)
+        self.edit_menu.add_separator()
+        self.edit_menu.add_action(self.copy_action)
+        self.edit_menu.add_action(self.paste_action)
 
     def create_document(self, file_path: str = None) -> Document:
         raise NotImplementedError
@@ -184,6 +193,12 @@ class MainWindow(QMainWindow):
 
     def save_as_event(self):
         self.save_event(save_as=True)
+
+    def copy_event(self):
+        pass
+
+    def paste_event(self):
+        pass
 
     def exit_event(self):
         QApplication.quit()

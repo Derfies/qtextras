@@ -134,6 +134,8 @@ class MainWindow(MainWindowBase):
 
     def create_sprite_click(self):
 
+        self.openGLWidget.makeCurrent()
+
         gl_width, gl_height = self.viewport.size().width(), self.viewport.size().height()
 
         width = random.randint(50, 100)

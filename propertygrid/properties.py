@@ -118,7 +118,9 @@ class BoolProperty(PropertyBase):
 class IntProperty(PropertyBase):
 
     def create_editor(self, parent) -> QWidget | None:
-        return QSpinBox(parent)
+        spin_box = QSpinBox(parent)
+        spin_box.set_maximum(100000)
+        return spin_box
 
     def get_editor_data(self, editor: QSpinBox):
         return editor.value()

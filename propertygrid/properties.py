@@ -13,7 +13,15 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QWidget,
 )
+
+from propertygrid.constants import (
+    Undefined,
+    UndefinedBool,
+    UndefinedColour,
+    UndefinedInt,
+)
 from propertygrid.types import FilePathQImage
+
 
 if 'unittest' not in sys.modules.keys():
 
@@ -151,7 +159,8 @@ class StringProperty(PropertyBase):
         return editor.text()
 
     def set_editor_data(self, editor: QLineEdit):
-        editor.set_text(self.value())
+        if not isinstance(self.value(), Undefined):
+            editor.set_text(self.value())
 
 
 class EnumProperty(PropertyBase):
@@ -199,11 +208,13 @@ class ColourProperty(PropertyBase):
 
     def decoration_role(self):
         pixmap = QPixmap(26, 26)
-        pixmap.fill(self.value())
-        return QIcon(pixmap)
+        if not isinstance(self.value(), Undefined):
+            pixmap.fill(self.value())
+            return QIcon(pixmap)
 
     def create_editor(self, parent) -> QWidget | None:
-        return QColorDialog(self.value(), parent)
+        args = [self.value()] if not isinstance(self.value(), Undefined) else []
+        return QColorDialog(*args, parent=parent)
 
     def get_editor_data(self, editor: QColorDialog):
         return editor.current_color()

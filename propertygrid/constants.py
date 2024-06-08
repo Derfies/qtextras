@@ -8,11 +8,11 @@ class UndefinedBool(Undefined):
     pass
 
 
-class UndefinedColour(Undefined):
+class UndefinedInt(Undefined):
 
     pass
 
 
-class UndefinedInt(Undefined):
+class UndefinedColour(Undefined):
 
     pass

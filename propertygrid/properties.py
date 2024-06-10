@@ -129,7 +129,11 @@ class BoolProperty(PropertyBase):
 class IntProperty(PropertyBase):
 
     def create_editor(self, parent) -> QWidget | None:
-        return QSpinBox(parent)
+
+        # TODO: Expose min / max somewhere.. but how :D
+        widget = QSpinBox(parent)
+        widget.set_maximum(20000)
+        return widget
 
     def get_editor_data(self, editor: QSpinBox):
         return editor.value()
@@ -141,7 +145,11 @@ class IntProperty(PropertyBase):
 class FloatProperty(PropertyBase):
 
     def create_editor(self, parent) -> QWidget | None:
-        return QDoubleSpinBox(parent)
+
+        # TODO: Expose min / max somewhere.. but how :D
+        widget = QDoubleSpinBox(parent)
+        widget.set_minimum(-99.0)
+        return widget
 
     def get_editor_data(self, editor: QSpinBox):
         return editor.value()

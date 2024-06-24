@@ -4,6 +4,11 @@ from enum import Enum
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt
 from PySide6.QtGui import QColor, QImage
 
+from propertygrid.constants import (
+    UndefinedBool,
+    UndefinedColour,
+    UndefinedInt,
+)
 from propertygrid.properties import (
     BoolProperty,
     ColourProperty,
@@ -108,9 +113,9 @@ class Model(QAbstractItemModel):
         self.begin_insert_rows(QModelIndex(), self.row_count(self._root), self.row_count(self._root))
         for key, value in properties.items():
             property_cls = None
-            if isinstance(value, bool):
+            if isinstance(value, bool) or isinstance(value, UndefinedBool):#value is UndefinedBool:
                 property_cls = BoolProperty
-            elif isinstance(value, int):
+            elif isinstance(value, int) or isinstance(value, UndefinedInt):
                 property_cls = IntProperty
             elif isinstance(value, float):
                 property_cls = FloatProperty
@@ -118,7 +123,7 @@ class Model(QAbstractItemModel):
                 property_cls = StringProperty
             elif isinstance(value, Enum):
                 property_cls = EnumProperty
-            elif isinstance(value, QColor):
+            elif isinstance(value, QColor) or isinstance(value, UndefinedColour):
                 property_cls = ColourProperty
             elif isinstance(value, FilePathQImage):
                 property_cls = ImageProperty

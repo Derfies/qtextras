@@ -1,4 +1,5 @@
-﻿import weakref
+﻿import sys
+import weakref
 from enum import EnumMeta
 
 from PySide6.QtGui import QIcon, QPixmap, Qt
@@ -12,10 +13,20 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QWidget,
 )
+
+from propertygrid.constants import (
+    Undefined,
+    UndefinedBool,
+    UndefinedColour,
+    UndefinedInt,
+)
 from propertygrid.types import FilePathQImage
 
-# noinspection PyUnresolvedReferences
-from __feature__ import snake_case
+
+if 'unittest' not in sys.modules.keys():
+
+    # noinspection PyUnresolvedReferences
+    from __feature__ import snake_case
 
 
 class PropertyBase:
@@ -118,7 +129,11 @@ class BoolProperty(PropertyBase):
 class IntProperty(PropertyBase):
 
     def create_editor(self, parent) -> QWidget | None:
-        return QSpinBox(parent)
+
+        # TODO: Expose min / max somewhere.. but how :D
+        widget = QSpinBox(parent)
+        widget.set_maximum(20000)
+        return widget
 
     def get_editor_data(self, editor: QSpinBox):
         return editor.value()
@@ -130,7 +145,11 @@ class IntProperty(PropertyBase):
 class FloatProperty(PropertyBase):
 
     def create_editor(self, parent) -> QWidget | None:
-        return QDoubleSpinBox(parent)
+
+        # TODO: Expose min / max somewhere.. but how :D
+        widget = QDoubleSpinBox(parent)
+        widget.set_minimum(-99.0)
+        return widget
 
     def get_editor_data(self, editor: QSpinBox):
         return editor.value()
@@ -148,7 +167,8 @@ class StringProperty(PropertyBase):
         return editor.text()
 
     def set_editor_data(self, editor: QLineEdit):
-        editor.set_text(self.value())
+        if not isinstance(self.value(), Undefined):
+            editor.set_text(self.value())
 
 
 class EnumProperty(PropertyBase):
@@ -196,11 +216,13 @@ class ColourProperty(PropertyBase):
 
     def decoration_role(self):
         pixmap = QPixmap(26, 26)
-        pixmap.fill(self.value())
-        return QIcon(pixmap)
+        if not isinstance(self.value(), Undefined):
+            pixmap.fill(self.value())
+            return QIcon(pixmap)
 
     def create_editor(self, parent) -> QWidget | None:
-        return QColorDialog(self.value(), parent)
+        args = [self.value()] if not isinstance(self.value(), Undefined) else []
+        return QColorDialog(*args, parent=parent)
 
     def get_editor_data(self, editor: QColorDialog):
         return editor.current_color()

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_COMPANY_NAME = 'Enron'
 DEFAULT_APP_NAME = 'Application Framework'
-NODE_RADIUS = 5
+NODE_RADIUS = 2
 
 
 class EnumValues(Enum):
@@ -96,6 +96,27 @@ class Path(QGraphicsPathItem):
         self.set_path(self.path)
 
 
+def bounding_box(points):
+    x_coordinates, y_coordinates = zip(*points)
+
+    return [(min(x_coordinates), min(y_coordinates)), (max(x_coordinates), max(y_coordinates))]
+
+
+class View(QGraphicsView):
+
+    def wheel_event(self, event):
+        #if self.hasPhoto():
+        if event.angle_delta().y() > 0:
+            factor = 1.25
+
+        else:
+            factor = 0.8
+
+        print(factor)
+
+        self.scale(factor, factor)
+
+
 class MainWindow(MainWindowBase):
 
     """
@@ -107,20 +128,81 @@ class MainWindow(MainWindowBase):
         super().__init__(*args, **kwargs)
 
         self.scene = QGraphicsScene()
-        self.view = QGraphicsView(self.scene)
+        self.view = View(self.scene)
+
+        import sys
+        if r'C:\Users\Jamie Davies\Documents\git\gameengines' not in sys.path:
+            sys.path.append(r'C:\Users\Jamie Davies\Documents\git\gameengines')
+
+        from gameengines.build.duke3d import MapReader as Duke3dMapReader
+        file_path = r'C:\Program Files (x86)\Steam\steamapps\common\Duke Nukem 3D\gameroot\maps\LL-SEWER.MAP'
+        with open(file_path, 'rb') as file:
+            m = Duke3dMapReader()(file)
+        # self.assertEqual(1, len(m.sectors))
+        # self.assertEqual(4, len(m.walls))
+        # self.assertEqual(0, len(m.sprites))
+
+        for sector in m.sectors:
+
+            print('')
+            print(sector)
+
+            cells = []
+            cell = []
+            cell_wallptr = sector.wallptr
+            next_point_idx = sector.wallptr
+            for i in range(sector.wallnum):
+
+                wall = m.walls[next_point_idx]
+                print('    wall:', wall)
+                cell.append((wall.x / 100, wall.y / 100))
+                next_point_idx = wall.point2
+
+                # HAX
+                if next_point_idx < 0:
+                    break
+
+                # If the next point returns to the start and we haven't reached the
+                # end of the sector's walls then the sector has a hole which we
+                # currently can't support.
+                print('next_point_idx:', next_point_idx, 'cell_wallptr:', cell_wallptr)
+                if next_point_idx == cell_wallptr:
+                    next_point_idx = sector.wallptr + i + 1
+                    cell_wallptr = next_point_idx
+                    cells.append(cell)
+                    cell = []
+
+
+
+            for cell in cells:
+
+                print('cell:', cell)
+
+                # Add a shape.
+                path = QPainterPath()
+                points = [QPointF(p[0], p[1]) for p in cell]
+                points.append(QPointF(cell[0][0], cell[0][1]))
+                poly = QPolygonF(points)
+                path.add_polygon(poly)
+
+                self.scene.add_item(Path(path, self.scene))
+
+        #raise
 
         # Add a shape.
-        path = QPainterPath()
-        poly = QPolygonF([
-            QPointF(0, 0),
-            QPointF(0, 100),
-            QPointF(100, 100),
-            QPointF(100, 0),
-            QPointF(0, 0)
-        ])
-        path.add_polygon(poly)
+        # path = QPainterPath()
+        # poly = QPolygonF([
+        #     QPointF(0, 0),
+        #     QPointF(0, 100),
+        #     QPointF(100, 100),
+        #     QPointF(100, 0),
+        #     QPointF(0, 0)
+        # ])
+        # path.add_polygon(poly)
+        #
+        # self.scene.add_item(Path(path, self.scene))
 
-        self.scene.add_item(Path(path, self.scene))
+        #print(self.view._zoom)
 
         self.property_grid = PropertyGrid()
         self.property_grid.model().data_changed.connect(self.on_data_changed)
@@ -142,7 +224,11 @@ class MainWindow(MainWindowBase):
 
         self.widget_manager.register_widget('main_splitter', self.splitter)
 
+        self.view.fit_in_view(self.scene.scene_rect(), Qt.AspectRatioMode.KeepAspectRatio)
+
         self.app().doc.updated(dirty=False)
+
+
 
     def create_document(self, file_path: str = None) -> Document:
         return Document(file_path, Content(), UpdateFlag)

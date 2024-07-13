@@ -13,11 +13,10 @@ logger = logging.getLogger(__name__)
 
 class Document:
 
-    def __init__(self, file_path: None, content: ContentBase, UpdateFlag: EnumMeta):
+    def __init__(self, file_path: str | None, content: ContentBase, UpdateFlag: EnumMeta):
         self.file_path = file_path
         self.content = content
         self.dirty = False
-        self.selection = []
 
         # Build the update all flag.
         all_mbr = UpdateFlag(0)

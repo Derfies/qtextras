@@ -26,15 +26,19 @@ class MultiObjectWrapper:
     By the default the grid searches for attributes using vars, which does not
     pick up computed python properties.
 
-    Use __dict__ directly to avoid calling __setattr__.
-
     A property will show if it's common to all objects.
     The property's value will be *visible* if it's the same for all objects.
+
+    Note: Beginning to hate the "magickness" of the property grid, specifically
+    how it picks up properties (ie via use of vars). It means that we can't have
+    complex internals for a class like this without risking exposing them on the
+    panel - the only reason 'objs' doesn't appear is because there is no property
+    configured for it.
 
     """
 
     def __init__(self, objs: list[object]):
-        self.__dict__['objs'] = objs
+        self.objs = objs
 
         # Collect common properties.
         common = dict(vars(objs[0]))
@@ -54,17 +58,7 @@ class MultiObjectWrapper:
                     common[key] = value
 
         for key, value in common.items():
-            self.__dict__[key] = value
-
-    def __setattr__(self, key, value):
-        super().__setattr__(key, value)
-
-        # Don't allow setting of Undefined values.
-        # Ok, this fixes a crash but it bricks undo for multiple objects.
-        if isinstance(value, Undefined):
-            return
-        for obj in self.objs:
-            setattr(obj, key, value)
+            setattr(self, key, value)
 
 
 class Widget(QTreeView):

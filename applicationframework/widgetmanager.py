@@ -1,4 +1,5 @@
 import logging
+import os
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QSplitter, QWidget
@@ -31,6 +32,9 @@ class WidgetManager:
         for key in self._settings.all_keys():
             value = self._settings.value(key)
             name, param = key.split('/')
+            if name not in self._widgets:
+                logger.debug(f'Cannot load widget: {name} param: {param} value: {value}')
+                continue
             logger.debug(f'Loading widget: {name} param: {param} value: {value}')
             if param == 'rect':
                 self._widgets[name].set_geometry(value)
@@ -38,7 +42,8 @@ class WidgetManager:
                 self._widgets[name].restore_state(value)
             elif param == 'recent_file_paths':
                 for v in value:
-                    self._widgets[name].add_file_path(v)
+                    if os.path.exists(v):
+                        self._widgets[name].add_file_path(v)
                 self._widgets[name].update_actions()
 
     def save_settings(self):
@@ -48,5 +53,5 @@ class WidgetManager:
             if isinstance(widget, QSplitter):
                 self._settings.set_value('splitter_settings', widget.save_state())
             if isinstance(widget, OpenRecentMenu):
-                self._settings.set_value('recent_file_paths', widget.file_paths)
+                self._settings.set_value('recent_file_paths', widget.paths)
             self._settings.end_group()

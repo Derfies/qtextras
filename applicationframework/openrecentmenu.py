@@ -13,19 +13,30 @@ class OpenRecentMenu(QMenu):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.file_paths = []
+        self.paths: list[Path] = []
 
     def update_actions(self):
         self.clear()
-        for file_path in self.file_paths:
-            path = Path(file_path)
-            open_action = QAction(path.name, self)
-            open_action.set_data(file_path)
+        for path in self.paths:
+            open_action = QAction(str(path), self)
+            open_action.set_data(path)
             open_action.triggered.connect(partial(self.parent().open_event, open_action.data()))
             self.add_action(open_action)
+        self.add_separator()
+        self.clear_action = QAction('&Clear Recent', self)
+        self.clear_action.triggered.connect(self.clear_file_paths)
+        self.add_action(self.clear_action)
+
+        # Seems to be required to redraw menu actions.
         self.show()
         self.hide()
 
     def add_file_path(self, file_path: str):
-        if file_path not in self.file_paths:
-            self.file_paths.append(file_path)
+        path = Path(file_path)
+        if path not in self.paths:
+            self.paths.append(path)
+        self.update_actions()
+
+    def clear_file_paths(self):
+        self.paths = []
+        self.update_actions()

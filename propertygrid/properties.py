@@ -148,7 +148,9 @@ class FloatProperty(PropertyBase):
 
         # TODO: Expose min / max somewhere.. but how :D
         widget = QDoubleSpinBox(parent)
-        widget.set_minimum(-99.0)
+        widget.set_minimum(-1000.0)
+        widget.set_maximum(1000.0)
+        widget.set_decimals(3)
         return widget
 
     def get_editor_data(self, editor: QSpinBox):

@@ -2,8 +2,9 @@
 from enum import Enum
 
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt
-from PySide6.QtGui import QColor, QImage
+from PySide6.QtGui import QColor
 
+from gradientwidget.widget import Gradient, GradientWidget
 from propertygrid.constants import (
     UndefinedBool,
     UndefinedColour,
@@ -14,6 +15,7 @@ from propertygrid.properties import (
     ColourProperty,
     EnumProperty,
     FloatProperty,
+    GradientProperty,
     ImageProperty,
     IntProperty,
     PropertyBase,
@@ -109,6 +111,8 @@ class Model(QAbstractItemModel):
     def add_property_object(self, obj: object):
 
         # TODO: This is the last part that feels a bit funky...
+        # A better approach would be to expose a register interface, or remove
+        # this idea of magic property objects...
         properties = vars(obj)
         self.begin_insert_rows(QModelIndex(), self.row_count(self._root), self.row_count(self._root))
         for key, value in properties.items():
@@ -127,6 +131,8 @@ class Model(QAbstractItemModel):
                 property_cls = ColourProperty
             elif isinstance(value, FilePathQImage):
                 property_cls = ImageProperty
+            elif isinstance(value, Gradient):
+                property_cls = GradientProperty
             if property_cls is None:
                 logger.warning(f'Cannot resolve property type: {key} {value} {type(value)}')
                 continue

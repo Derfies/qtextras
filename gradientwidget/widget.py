@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QColor
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -15,7 +16,7 @@ STOP_SIZE = QSize(10, 10)
 class GradientStop:
 
     position: float
-    colour: str
+    colour: QColor
 
     def clamp(self):
         self.position = max(0.0, min(1.0, self.position))
@@ -28,8 +29,8 @@ class Gradient:
         # TODO: Use namedtuple?
         if stops is None:
             stops = [
-                (0.0, '#000000'),
-                (1.0, '#ffffff'),
+                (0.0, QColor('#000000')),
+                (1.0, QColor('#ffffff')),
             ]
         self._stops = [GradientStop(t[0], t[1]) for t in stops]
 
@@ -79,7 +80,7 @@ class GradientWidget(QtWidgets.QWidget):
         # Draw the linear horizontal gradient.
         gradient = QtGui.QLinearGradient(0, 0, w, 0)
         for stop in self._gradient:
-            gradient.set_color_at(stop.position, QtGui.QColor((stop.colour)))
+            gradient.set_color_at(stop.position, stop.colour)
         rect = QtCore.QRect(0, 0, w, h)
         painter.fill_rect(rect, gradient)
 
@@ -122,7 +123,7 @@ class GradientWidget(QtWidgets.QWidget):
         self.gradient_changed.emit()
         self.update()
 
-    def add_stop(self, position: float, colour=None):
+    def add_stop(self, position: float, colour: QColor | None = None):
         if position <= 0 or position >= 1.0:
             raise ValueError('New stop position must be within 0-1 range')
         for i, stop in enumerate(self._gradient):
@@ -146,9 +147,9 @@ class GradientWidget(QtWidgets.QWidget):
 
         # TODO: Change default colours to vec3 or something sensible...?
         dlg = QtWidgets.QColorDialog(self)
-        dlg.set_current_color(QtGui.QColor(stop.colour))
+        dlg.set_current_color(stop.colour)
         if dlg.exec_():
-            stop.colour = dlg.current_color().name()
+            stop.colour = dlg.current_color()
             self.gradient_changed.emit()
             self.update()
 
@@ -172,8 +173,10 @@ class GradientWidget(QtWidgets.QWidget):
                 self.choose_stop_colour(self._gradient[index])
         elif event.button() == Qt.LeftButton:
             index = self._get_event_stop_index(event)
-            if index is not None and 0 < index < len(self._gradient) - 1:
-                self._drag_index = index
+
+            # TODO: Expose constructor kwarg to lock end stops...
+            #if index is not None and 0 < index < len(self._gradient) - 1:
+            self._drag_index = index
 
     def mouse_move_event(self, event):
         if self._drag_index is not None:

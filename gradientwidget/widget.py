@@ -1,3 +1,4 @@
+import copy
 from typing import Iterable
 from dataclasses import dataclass
 
@@ -17,6 +18,14 @@ class GradientStop:
 
     position: float
     colour: QColor
+
+    def __deepcopy__(self, memo):
+        """
+        Default deep copy behaviour seems to crash python. My guess is that deep
+        copying a python wrapper around a C++ object is a no-no.
+
+        """
+        return self.__class__(self.position, copy.copy(self.colour))
 
     def clamp(self):
         self.position = max(0.0, min(1.0, self.position))

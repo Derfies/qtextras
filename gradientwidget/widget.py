@@ -52,6 +52,9 @@ class Gradient:
     def insert(self, index, val):
         self._stops.insert(index, val)
 
+    def append(self, val):
+        self._stops.append(val)
+
     def validate(self):
         self._stops = sorted(self._stops, key=lambda h: h.position)
         for stop in self._stops:
@@ -126,10 +129,15 @@ class GradientWidget(QtWidgets.QWidget):
     def add_stop(self, position: float, colour: QColor | None = None):
         if position <= 0 or position >= 1.0:
             raise ValueError('New stop position must be within 0-1 range')
+
+        # Find the correct index to insert the new stop, or append if it was
+        # after the last stop.
         for i, stop in enumerate(self._gradient):
             if stop.position > position:
                 self._gradient.insert(i, GradientStop(position, colour or stop.colour))
                 break
+        else:
+            self._gradient.append(GradientStop(position, colour or stop.colour))
         self._gradient.validate()
         self.gradient_changed.emit()
         self.update()
@@ -137,8 +145,8 @@ class GradientWidget(QtWidgets.QWidget):
     def remove_stop(self, index: int):
 
         # TODO: Validate gradient before doing anything else??
-        if not 0 < index < len(self._gradient) - 1:
-            raise ValueError(f'Index must be within 0-{len(self._gradient) - 1} range')
+        #if not 0 < index < len(self._gradient) - 1:
+        #    raise ValueError(f'Index must be within 0-{len(self._gradient) - 1} range')
         del self._gradient[index]
         self.gradient_changed.emit()
         self.update()

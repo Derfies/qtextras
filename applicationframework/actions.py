@@ -63,7 +63,7 @@ class Edit(Base):
 
 class SetAttribute(Edit):
 
-    def __init__(self, name, value, *args, flags: Flag | None = None):
+    def __init__(self, name, value, *args, flags: Flag | None = None, old_value=None):
 
         # Should flags be in base edit class?
         super().__init__(*args)
@@ -73,8 +73,8 @@ class SetAttribute(Edit):
         # BUG:
         # In the case of multiple objects, the old value might be undefined which
         # is a value we don't want to set back to.
-        self.old_value = getattr(self.obj, name)
-        #print('old value:', self.old_value)
+        # TODO: None might be a valid old_value, so maybe use **kwargs.
+        self.old_value = old_value if old_value is not None else getattr(self.obj, name)
         self.flags = flags
 
     def undo(self):

@@ -1,10 +1,10 @@
 ﻿import logging
 from enum import Enum
 
-from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
 
-from gradientwidget.widget import Gradient, GradientWidget
+from gradientwidget.widget import Gradient
 from propertygrid.constants import (
     UndefinedBool,
     UndefinedColour,
@@ -37,6 +37,8 @@ class Model(QAbstractItemModel):
     accessed by the GUI widget.
 
     """
+
+    data_changing = Signal(QModelIndex, QModelIndex)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QLineEdit,
+    QSlider,
     QSpinBox,
     QWidget,
 )
@@ -49,6 +50,7 @@ class PropertyBase:
         self._parent = parent
         self._label = label
 
+        self._old_value = None
         self._new_value = None
         self._children = []
         if parent is not None:
@@ -71,6 +73,12 @@ class PropertyBase:
 
     def set_new_value(self, editor):
         self._new_value = self.get_editor_data(editor)
+
+    def old_value(self):
+        return self._old_value
+
+    def set_old_value(self, editor):
+        self._old_value = self.get_editor_data(editor)
 
     def is_valid(self):
         return False
@@ -96,6 +104,12 @@ class PropertyBase:
 
     def decoration_role(self):
         return None
+
+    def about_to_change(self, editor: QWidget):
+        return None
+
+    def changing(self, editor: QWidget):
+        raise NotImplementedError
 
     def changed(self, editor: QWidget):
         raise NotImplementedError
@@ -161,6 +175,27 @@ class FloatProperty(PropertyBase):
         editor.set_value(self.value())
 
 
+class FloatSliderProperty(FloatProperty):
+
+    modal_editor = False
+
+    def about_to_change(self, editor: QSlider):
+        return editor.sliderPressed
+
+    def changing(self, editor: QSlider):
+        return editor.sliderMoved
+
+    def changed(self, editor: QSlider):
+        return editor.sliderReleased
+
+    def create_editor(self, parent) -> QWidget | None:
+        widget = QSlider(Qt.Orientation.Horizontal, parent)
+        return widget
+
+    def get_editor_data(self, editor: QSpinBox):
+        return float(editor.value())
+
+
 class StringProperty(PropertyBase):
 
     def create_editor(self, parent) -> QWidget | None:
@@ -185,6 +220,9 @@ class EnumProperty(PropertyBase):
     """
 
     modal_editor = False
+
+    def changing(self, editor: QWidget):
+        return None
 
     @property
     def enum(self) -> EnumMeta:

@@ -159,12 +159,17 @@ class IntProperty(PropertyBase):
 
 class FloatProperty(PropertyBase):
 
-    def create_editor(self, parent) -> QWidget | None:
+    def __init__(self, *args, **kwargs):
+        self.min = kwargs.pop('min', None)
+        self.max = kwargs.pop('max', None)
+        super().__init__(*args, **kwargs)
 
-        # TODO: Expose min / max somewhere.. but how :D
+    def create_editor(self, parent) -> QWidget | None:
         widget = QDoubleSpinBox(parent)
-        widget.set_minimum(-1000.0)
-        widget.set_maximum(1000.0)
+        if self.min is not None:
+            widget.set_minimum(self.min)
+        if self.max is not None:
+            widget.set_maximum(self.max)
         widget.set_decimals(3)
         return widget
 
@@ -188,12 +193,18 @@ class FloatSliderProperty(FloatProperty):
     def changed(self, editor: QSlider):
         return editor.sliderReleased
 
-    def create_editor(self, parent) -> QWidget | None:
-        widget = QSlider(Qt.Orientation.Horizontal, parent)
-        return widget
-
     def get_editor_data(self, editor: QSpinBox):
         return float(editor.value())
+
+    def create_editor(self, parent) -> QWidget | None:
+        widget = QSlider(Qt.Orientation.Horizontal, parent)
+        widget.set_tick_interval(0.1)
+        widget.set_single_step(0.1)
+        if self.min is not None:
+            widget.set_minimum(self.min)
+        if self.max is not None:
+            widget.set_maximum(self.max)
+        return widget
 
 
 class StringProperty(PropertyBase):

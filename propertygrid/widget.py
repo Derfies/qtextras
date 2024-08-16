@@ -1,4 +1,6 @@
-﻿from PySide6.QtGui import QColor
+﻿
+
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QTreeView
 
 from propertygrid.constants import (
@@ -15,6 +17,11 @@ from __feature__ import snake_case
 
 
 class MultiObjectWrapper:
+
+    """
+    TODO: Move to application...
+
+    """
 
     """
     Convenience wrapper to allow the property grid to set multiple objects'
@@ -38,6 +45,8 @@ class MultiObjectWrapper:
     """
 
     def __init__(self, objs: list[object]):
+
+        from dataclasses import fields
         self.objs = objs
 
         # Collect common properties.
@@ -71,7 +80,7 @@ class Widget(QTreeView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.set_model(Model(self))
+        #self.set_model(Model(self))
         self.set_item_delegate(TypeDelegate(self))
 
     def add_object(self, property_object):

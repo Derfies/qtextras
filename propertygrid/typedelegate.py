@@ -21,26 +21,21 @@ class TypeDelegate(QItemDelegate):
         item.set_editor_data(editor)
         self.block_signals(False)
 
-    def set_model_data(self, editor: QWidget, model: Model, index: QModelIndex, hot=False):
+    def set_model_data(self, editor: QWidget, model: Model, index: QModelIndex):
+        """
+        Might need to expose some way of signalling a dialog cancellation.
+
+        """
         item = index.internal_pointer()
-
-        # TODO: Might need to expose some way of signalling a dialog cancellation.
         item.set_new_value(editor)
+        model.data_changed.emit(index, index)
 
-        # TODO: Might be useful to have this set as part of property grid
-        # constructor, ie having properties set in place might be useful.
-        #item.set_model_data(editor)
-        if hot:
-            try:
-                model.data_changing.emit(index, index)
-                print('data_changing EMIT')
-            except Exception as e:
-                print(e)
-        else:
-            model.data_changed.emit(index, index)
-            print('data_changed EMIT')
+    def set_model_changing_data(self, editor: QWidget, model: Model, index: QModelIndex):
+        item = index.internal_pointer()
+        item.set_new_value(editor)
+        model.data_changing.emit(index, index)
 
-    def foo(self, editor: QWidget, model: Model, index: QModelIndex):
+    def set_model_old_data(self, editor: QWidget, model: Model, index: QModelIndex):
         item = index.internal_pointer()
         item.set_old_value(editor)
 
@@ -50,9 +45,9 @@ class TypeDelegate(QItemDelegate):
         if not self.parent().index_widget(index):
             self.parent().set_index_widget(index, editor)
         if item.about_to_change(editor) is not None:
-            item.about_to_change(editor).connect(lambda: self.foo(editor, index.model(), index))
+            item.about_to_change(editor).connect(lambda: self.set_model_old_data(editor, index.model(), index))
         if item.changing(editor) is not None:
-            item.changing(editor).connect(lambda: self.set_model_data(editor, index.model(), index, hot=True))
+            item.changing(editor).connect(lambda: self.set_model_changing_data(editor, index.model(), index))
         item.changed(editor).connect(lambda: self.set_model_data(editor, index.model(), index))
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):

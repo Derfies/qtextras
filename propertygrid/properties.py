@@ -105,15 +105,6 @@ class PropertyBase:
     def decoration_role(self):
         return None
 
-    def about_to_change(self, editor: QWidget):
-        return None
-
-    def changing(self, editor: QWidget):
-        raise NotImplementedError
-
-    def changed(self, editor: QWidget):
-        raise NotImplementedError
-
     def create_editor(self, parent) -> QWidget | None:
         return None
 
@@ -121,6 +112,15 @@ class PropertyBase:
         raise NotImplementedError
 
     def set_editor_data(self, editor: QWidget):
+        raise NotImplementedError
+
+    def about_to_change(self, editor: QWidget):
+        return None
+
+    def changing(self, editor: QWidget):
+        return None#raise NotImplementedError
+
+    def changed(self, editor: QWidget):
         raise NotImplementedError
 
 

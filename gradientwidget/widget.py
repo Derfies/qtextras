@@ -6,8 +6,10 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor
 
-# noinspection PyUnresolvedReferences
-from __feature__ import snake_case
+import sys
+if 'unittest' not in sys.modules.keys():
+    # noinspection PyUnresolvedReferences
+    from __feature__ import snake_case
 
 
 STOP_SIZE = QSize(10, 10)
@@ -25,7 +27,7 @@ class GradientStop:
         copying a python wrapper around a C++ object is a no-no.
 
         """
-        return self.__class__(self.position, copy.copy(self.colour))
+        return self.__class__(self.position, QColor(self.colour))
 
     def clamp(self):
         self.position = max(0.0, min(1.0, self.position))

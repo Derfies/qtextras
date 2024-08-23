@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from gradientwidget.widget import GradientWidget
 from propertygrid.constants import (
     Undefined,
     UndefinedBool,
@@ -253,3 +254,20 @@ class ImageProperty(PropertyBase):
 
     def set_editor_data(self, editor: QColorDialog):
         pass
+
+
+class GradientProperty(PropertyBase):
+
+    modal_editor = False
+
+    def create_editor(self, parent) -> QWidget | None:
+        return GradientWidget(None, parent)
+
+    def get_editor_data(self, editor: GradientWidget):
+        return editor.gradient()
+
+    def set_editor_data(self, editor: GradientWidget):
+        editor.set_gradient(self.value())
+
+    def changed(self, editor: GradientWidget):
+        return editor.gradient_changed

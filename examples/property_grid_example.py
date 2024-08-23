@@ -13,6 +13,7 @@ from applicationframework.application import Application
 from applicationframework.contentbase import ContentBase
 from applicationframework.document import Document
 from applicationframework.mainwindow import MainWindow as MainWindowBase
+from gradientwidget.widget import Gradient
 from propertygrid.widget import Widget as PropertyGrid
 
 # noinspection PyUnresolvedReferences
@@ -42,6 +43,13 @@ class Content(ContentBase):
     string_value: str = 'one'
     enum_value: EnumValues = EnumValues.ONE
     colour_property: QColor = QColorConstants.White
+    r1: Gradient = Gradient()
+    b1: Gradient = Gradient()
+    rgb1: Gradient = Gradient()
+
+    r2: Gradient = Gradient()
+    b2: Gradient = Gradient()
+    rgb2: Gradient = Gradient()
 
     def load(self, file_path: str):
         pass

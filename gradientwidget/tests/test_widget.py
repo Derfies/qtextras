@@ -1,6 +1,8 @@
 import copy
 from unittest import TestCase
 
+from PySide6.QtGui import QColor, QColorConstants
+
 from gradientwidget.widget import Gradient
 
 
@@ -14,9 +16,12 @@ class GradientTestCase(TestCase):
         """
         # Set up test data.
         g = Gradient()
+        g[0].colour = QColorConstants.DarkMagenta
+        g[1].colour = QColorConstants.DarkGreen
 
         # Start test.
         deep_copied_g = copy.deepcopy(g)
 
         # Assert results.
         self.assertIsNot(g[0].colour, deep_copied_g[0].colour)
+        self.assertEqual(g[0].colour, deep_copied_g[0].colour)

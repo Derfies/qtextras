@@ -1,7 +1,8 @@
-﻿import logging
+﻿import copy
+import logging
 from enum import Enum
 
-from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, Signal
+from PySide6.QtCore import QAbstractItemModel, QEvent, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
 
 from gradientwidget.widget import Gradient
@@ -15,6 +16,7 @@ from propertygrid.properties import (
     ColourProperty,
     EnumProperty,
     FloatProperty,
+    FloatSliderProperty,
     GradientProperty,
     ImageProperty,
     IntProperty,
@@ -30,6 +32,23 @@ from __feature__ import snake_case
 logger = logging.getLogger(__name__)
 
 
+class ModelEvent:
+
+    def __init__(self, obj, name, value):
+        self._object = obj
+        self._name = name
+        self._value = value
+
+    def object(self):
+        return self._object
+
+    def name(self):
+        return self._name
+
+    def value(self):
+        return self._value
+
+
 class Model(QAbstractItemModel):
 
     """
@@ -38,16 +57,13 @@ class Model(QAbstractItemModel):
 
     """
 
-    data_changing = Signal(QModelIndex, QModelIndex)
+    data_changed = Signal(ModelEvent)
+    data_changing = Signal(ModelEvent)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._root = PropertyBase('Root', None, None)
         self._items = []
-
-    @property
-    def data_changed(self):
-        return self.dataChanged
 
     def row_count(self, parent=None, *args, **kwargs):
         if not parent.is_valid():
@@ -118,13 +134,23 @@ class Model(QAbstractItemModel):
         properties = vars(obj)
         self.begin_insert_rows(QModelIndex(), self.row_count(self._root), self.row_count(self._root))
         for key, value in properties.items():
+
+            # We want to use a deep copy of the value being passed in so it
+            # doesn't get mutated in place (for complex data objects). QColor
+            # seems to crash everyone's party so duplicate that in a sensible
+            # way.
+            if isinstance(value, QColor):
+                value = QColor(value)
+            else:
+                value = copy.deepcopy(value)
+
             property_cls = None
-            if isinstance(value, bool) or isinstance(value, UndefinedBool):#value is UndefinedBool:
+            if isinstance(value, bool) or isinstance(value, UndefinedBool):
                 property_cls = BoolProperty
             elif isinstance(value, int) or isinstance(value, UndefinedInt):
                 property_cls = IntProperty
             elif isinstance(value, float):
-                property_cls = FloatProperty
+                property_cls = FloatSliderProperty
             elif isinstance(value, str):
                 property_cls = StringProperty
             elif isinstance(value, Enum):
@@ -138,7 +164,7 @@ class Model(QAbstractItemModel):
             if property_cls is None:
                 logger.warning(f'Cannot resolve property type: {key} {value} {type(value)}')
                 continue
-            self.add_property(property_cls(key, obj, self._root))
+            self.add_property(property_cls(key, obj, value, self._root))
         self.end_insert_rows()
 
     def clear(self):

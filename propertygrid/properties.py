@@ -43,15 +43,14 @@ class PropertyBase:
 
     modal_editor = True
 
-    def __init__(self, name, obj=None, parent=None, label=None):
+    def __init__(self, name, obj=None, value=None, parent=None, label=None):
         self._name = name
         if obj is not None:
-            self._ref = weakref.ref(obj)
+           self._ref = weakref.ref(obj)
+        self._value = value
         self._parent = parent
         self._label = label
 
-        self._old_value = None
-        self._new_value = None
         self._children = []
         if parent is not None:
             parent.add_child(self)
@@ -59,26 +58,11 @@ class PropertyBase:
     def name(self) -> str:
         return self._name
 
+    def value(self):
+        return self._value
+
     def label(self) -> str:
         return self._label if self._label is not None else self._name
-
-    def value(self):
-        return getattr(self._ref(), self._name)
-
-    def set_value(self, value):
-        setattr(self._ref(), self._name, value)
-
-    def new_value(self):
-        return self._new_value
-
-    def set_new_value(self, editor):
-        self._new_value = self.get_editor_data(editor)
-
-    def old_value(self):
-        return self._old_value
-
-    def set_old_value(self, editor):
-        self._old_value = self.get_editor_data(editor)
 
     def is_valid(self):
         return False
@@ -113,9 +97,6 @@ class PropertyBase:
 
     def set_editor_data(self, editor: QWidget):
         raise NotImplementedError
-
-    def about_to_change(self, editor: QWidget):
-        return None
 
     def changing(self, editor: QWidget):
         return None#raise NotImplementedError
@@ -184,15 +165,6 @@ class FloatSliderProperty(FloatProperty):
 
     modal_editor = False
 
-    def about_to_change(self, editor: QSlider):
-        return editor.sliderPressed
-
-    def changing(self, editor: QSlider):
-        return editor.sliderMoved
-
-    def changed(self, editor: QSlider):
-        return editor.sliderReleased
-
     def get_editor_data(self, editor: QSpinBox):
         return float(editor.value())
 
@@ -205,6 +177,12 @@ class FloatSliderProperty(FloatProperty):
         if self.max is not None:
             widget.set_maximum(self.max)
         return widget
+
+    def changing(self, editor: QSlider):
+        return editor.sliderMoved
+
+    def changed(self, editor: QSlider):
+        return editor.sliderReleased
 
 
 class StringProperty(PropertyBase):
@@ -232,9 +210,6 @@ class EnumProperty(PropertyBase):
 
     modal_editor = False
 
-    def changing(self, editor: QWidget):
-        return None
-
     @property
     def enum(self) -> EnumMeta:
         return type(self.value())
@@ -242,9 +217,6 @@ class EnumProperty(PropertyBase):
     @property
     def enum_values(self) -> list[str]:
         return [str(e.value) for e in self.enum.__members__.values()]
-
-    def changed(self, editor: QComboBox):
-        return editor.currentIndexChanged
 
     def create_editor(self, parent) -> QWidget | None:
         editor = QComboBox(parent)
@@ -256,6 +228,12 @@ class EnumProperty(PropertyBase):
 
     def set_editor_data(self, editor: QComboBox):
         editor.set_current_text(str(self.value().value))
+
+    def changing(self, editor: QWidget):
+        return None
+
+    def changed(self, editor: QComboBox):
+        return editor.currentIndexChanged
 
 
 class ColourProperty(PropertyBase):
@@ -317,6 +295,9 @@ class GradientProperty(PropertyBase):
 
     def set_editor_data(self, editor: GradientWidget):
         editor.set_gradient(self.value())
+
+    def changing(self, editor: GradientWidget):
+        return editor.gradient_changing
 
     def changed(self, editor: GradientWidget):
         return editor.gradient_changed

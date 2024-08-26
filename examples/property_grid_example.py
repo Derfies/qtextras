@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from enum import Enum, Flag
 
 import qdarktheme
-from PySide6.QtCore import QModelIndex
 from PySide6.QtGui import QColor, QColorConstants
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
@@ -14,6 +13,7 @@ from applicationframework.contentbase import ContentBase
 from applicationframework.document import Document
 from applicationframework.mainwindow import MainWindow as MainWindowBase
 from gradientwidget.widget import Gradient
+from propertygrid.model import Model, ModelEvent
 from propertygrid.widget import Widget as PropertyGrid
 
 # noinspection PyUnresolvedReferences
@@ -43,13 +43,7 @@ class Content(ContentBase):
     string_value: str = 'one'
     enum_value: EnumValues = EnumValues.ONE
     colour_property: QColor = QColorConstants.White
-    r1: Gradient = Gradient()
-    b1: Gradient = Gradient()
-    rgb1: Gradient = Gradient()
-
-    r2: Gradient = Gradient()
-    b2: Gradient = Gradient()
-    rgb2: Gradient = Gradient()
+    gradient: Gradient = Gradient()
 
     def load(self, file_path: str):
         pass
@@ -69,10 +63,11 @@ class MainWindow(MainWindowBase):
         super().__init__(*args, **kwargs)
 
         self.refresh_button = QPushButton('Refresh')
-        self.refresh_button.clicked.connect(self.app().doc.updated)
 
         self.property_grid = PropertyGrid()
+        self.property_grid.set_model(Model())
         self.property_grid.model().data_changed.connect(self.on_data_changed)
+        self.property_grid.model().data_changing.connect(self.on_data_changing)
 
         self.layout = QVBoxLayout(self)
         self.layout.add_widget(self.property_grid)
@@ -92,12 +87,16 @@ class MainWindow(MainWindowBase):
 
         self.property_grid.set_object(doc.content)
 
-    def on_data_changed(self, index: QModelIndex):
-        item = index.internal_pointer()
-        action = SetAttribute(item.name(), item.new_value(), item._ref())
+    def on_data_changed(self, event: ModelEvent):
+        logger.debug(f'on_data_changed: {event.object()}, {event.name()} -> {event.value()}')
+
+        action = SetAttribute(event.name(), event.value(), event.object())
         self.app().action_manager.push(action)
         action()
         self.app().doc.updated()
+
+    def on_data_changing(self, event: ModelEvent):
+        logger.debug(f'on_data_changing: {event.object()}, {event.name()} -> {event.value()}')
 
 
 if __name__ == '__main__':

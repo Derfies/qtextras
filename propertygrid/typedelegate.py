@@ -1,12 +1,17 @@
-﻿from PySide6.QtCore import QModelIndex
+﻿import logging
+
+from PySide6.QtCore import QModelIndex
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QItemDelegate, QStyleOptionViewItem, QWidget
 
-from .model import Model
+from .model import Model, ModelEvent
 from .properties import PropertyBase
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
+
+
+logger = logging.getLogger(__name__)
 
 
 class TypeDelegate(QItemDelegate):
@@ -27,27 +32,21 @@ class TypeDelegate(QItemDelegate):
 
         """
         item = index.internal_pointer()
-        item.set_new_value(editor)
-        model.data_changed.emit(index, index)
+        event = ModelEvent(item._ref(), item.name(), item.get_editor_data(editor))
+        model.data_changed.emit(event)
 
-    def set_model_changing_data(self, editor: QWidget, model: Model, index: QModelIndex):
+    def set_model_changing_data(self, model: Model, index: QModelIndex, value):
         item = index.internal_pointer()
-        item.set_new_value(editor)
-        model.data_changing.emit(index, index)
-
-    def set_model_old_data(self, editor: QWidget, model: Model, index: QModelIndex):
-        item = index.internal_pointer()
-        item.set_old_value(editor)
+        event = ModelEvent(item._ref(), item.name(), value)
+        model.data_changing.emit(event)
 
     def paint_non_modal_editor(self, painter: QPainter, index: QModelIndex, item: PropertyBase):
         editor = item.create_editor(self.parent())
         item.set_editor_data(editor)
         if not self.parent().index_widget(index):
             self.parent().set_index_widget(index, editor)
-        if item.about_to_change(editor) is not None:
-            item.about_to_change(editor).connect(lambda: self.set_model_old_data(editor, index.model(), index))
         if item.changing(editor) is not None:
-            item.changing(editor).connect(lambda: self.set_model_changing_data(editor, index.model(), index))
+            item.changing(editor).connect(lambda value: self.set_model_changing_data(index.model(), index, value))
         item.changed(editor).connect(lambda: self.set_model_data(editor, index.model(), index))
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):

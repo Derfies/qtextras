@@ -2,6 +2,7 @@
 import weakref
 from enum import EnumMeta
 
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon, QPixmap, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -9,6 +10,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
+    QHBoxLayout,
     QLineEdit,
     QSlider,
     QSpinBox,
@@ -44,6 +46,7 @@ class PropertyBase:
     modal_editor = True
 
     def __init__(self, name, obj=None, value=None, parent=None, label=None):
+        #super().__init__()
         self._name = name
         if obj is not None:
            self._ref = weakref.ref(obj)
@@ -99,7 +102,7 @@ class PropertyBase:
         raise NotImplementedError
 
     def changing(self, editor: QWidget):
-        return None#raise NotImplementedError
+        return None
 
     def changed(self, editor: QWidget):
         raise NotImplementedError
@@ -109,93 +112,229 @@ class BoolProperty(PropertyBase):
 
     modal_editor = False
 
-    def changed(self, editor: QCheckBox):
-        return editor.stateChanged
+    class CheckBox(QCheckBox):
 
-    def create_editor(self, parent) -> QWidget | None:
-        return QCheckBox(parent)
+        _changed = Signal(bool)
 
-    def get_editor_data(self, editor: QCheckBox):
-        return editor.is_checked()
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
-    def set_editor_data(self, editor: QCheckBox):
+            self.stateChanged.connect(self.on_state_changed)
+
+        def on_state_changed(self):
+            self._changed.emit(self.is_checked())
+
+    def create_editor(self, parent) -> CheckBox | None:
+        return BoolProperty.CheckBox(self, parent)
+
+    def set_editor_data(self, editor: CheckBox):
         editor.set_checked(self.value())
+
+    def changed(self, editor: CheckBox):
+        return editor._changed
 
 
 class IntProperty(PropertyBase):
 
-    def create_editor(self, parent) -> QWidget | None:
+    modal_editor = False
 
-        # TODO: Expose min / max somewhere.. but how :D
-        widget = QSpinBox(parent)
-        widget.set_maximum(20000)
-        return widget
+    class SpinBox(QSpinBox):
 
-    def get_editor_data(self, editor: QSpinBox):
-        return editor.value()
+        _changed = Signal(int)
 
-    def set_editor_data(self, editor: QSpinBox):
-        editor.set_value(self.value())
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
+            if property.min is not None:
+                self.set_minimum(property.min)
+            if property.max is not None:
+                self.set_maximum(property.max)
+            self.valueChanged.connect(self.on_value_changed)
 
-class FloatProperty(PropertyBase):
+        def on_value_changed(self):
+            self._changed.emit(self.value())
 
     def __init__(self, *args, **kwargs):
         self.min = kwargs.pop('min', None)
         self.max = kwargs.pop('max', None)
         super().__init__(*args, **kwargs)
 
-    def create_editor(self, parent) -> QWidget | None:
-        widget = QDoubleSpinBox(parent)
-        if self.min is not None:
-            widget.set_minimum(self.min)
-        if self.max is not None:
-            widget.set_maximum(self.max)
-        widget.set_decimals(3)
-        return widget
+    def create_editor(self, parent) -> SpinBox | None:
+        return IntProperty.SpinBox(self, parent)
 
-    def get_editor_data(self, editor: QSpinBox):
-        return editor.value()
-
-    def set_editor_data(self, editor: QDoubleSpinBox):
+    def set_editor_data(self, editor: SpinBox):
         editor.set_value(self.value())
+
+    def changed(self, editor: SpinBox):
+        return editor._changed
+
+
+class FloatProperty(PropertyBase):
+
+    modal_editor = False
+
+    class DoubleSpinBox(QDoubleSpinBox):
+
+        _changed = Signal(float)
+
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            if property.min is not None:
+                self.set_minimum(property.min)
+            if property.max is not None:
+                self.set_maximum(property.max)
+            self.valueChanged.connect(self.on_value_changed)
+
+        def on_value_changed(self):
+            self._changed.emit(self.value())
+
+    def __init__(self, *args, **kwargs):
+        self.min = kwargs.pop('min', None)
+        self.max = kwargs.pop('max', None)
+        super().__init__(*args, **kwargs)
+
+    def create_editor(self, parent) -> DoubleSpinBox | None:
+        return FloatProperty.DoubleSpinBox(self, parent)
+
+    def set_editor_data(self, editor: DoubleSpinBox):
+        editor.set_value(float(self.value()))
+
+    def changed(self, editor: DoubleSpinBox):
+        return editor._changed
 
 
 class FloatSliderProperty(FloatProperty):
 
     modal_editor = False
 
-    def get_editor_data(self, editor: QSpinBox):
-        return float(editor.value())
+    class Slider(QSlider):
 
-    def create_editor(self, parent) -> QWidget | None:
-        widget = QSlider(Qt.Orientation.Horizontal, parent)
-        widget.set_tick_interval(0.1)
-        widget.set_single_step(0.1)
-        if self.min is not None:
-            widget.set_minimum(self.min)
-        if self.max is not None:
-            widget.set_maximum(self.max)
-        return widget
+        _changed = Signal(float)
 
-    def changing(self, editor: QSlider):
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            if property.min is not None:
+                self.set_minimum(property.min)
+            if property.max is not None:
+                self.set_maximum(property.max)
+            self.sliderReleased.connect(self.on_slider_moved)
+
+        def on_slider_moved(self):
+            self._changed.emit(self.value())
+
+    def __init__(self, *args, **kwargs):
+        self.min = kwargs.pop('min', None)
+        self.max = kwargs.pop('max', None)
+        super().__init__(*args, **kwargs)
+
+    def create_editor(self, parent) -> Slider | None:
+        return FloatSliderProperty.Slider(self, Qt.Orientation.Horizontal, parent)
+
+    def changing(self, editor: Slider):
         return editor.sliderMoved
 
-    def changed(self, editor: QSlider):
-        return editor.sliderReleased
+    def changed(self, editor: Slider):
+        return editor._changed
+
+
+class FloatWithSliderProperty(FloatProperty):
+
+    modal_editor = False
+
+    class FloatWithSliderWidget(QWidget):
+
+        _changing = Signal(float)
+        _changed = Signal(float)
+
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            self.spin_box = QDoubleSpinBox(self)
+            self.spin_box.valueChanged.connect(self.on_value_changed)
+
+            self.slider = QSlider(Qt.Orientation.Horizontal, self)
+            self.slider.set_tick_interval(0.1)
+            self.slider.set_single_step(0.1)
+            self.slider.sliderMoved.connect(self.on_slider_moved)
+            self.slider.sliderReleased.connect(self.on_slider_released)
+
+            self.layout = QHBoxLayout()
+            self.layout.add_widget(self.spin_box)
+            self.layout.add_widget(self.slider)
+            self.set_layout(self.layout)
+
+            if property.min is not None:
+                self.slider.set_minimum(property.min)
+                self.spin_box.set_minimum(property.min)
+            if property.max is not None:
+                self.slider.set_maximum(property.max)
+                self.spin_box.set_maximum(property.max)
+
+        def on_slider_moved(self, value):
+            self.spin_box.block_signals(True)
+            self.spin_box.set_value(value)
+            self.spin_box.block_signals(False)
+            self._changing.emit(value)
+
+        def on_slider_released(self):
+            self._changed.emit(self.slider.value())
+
+        def on_value_changed(self):
+            self._changed.emit(self.spin_box.value())
+
+    def __init__(self, *args, **kwargs):
+        self.min = kwargs.pop('min', None)
+        self.max = kwargs.pop('max', None)
+        super().__init__(*args, **kwargs)
+
+    def create_editor(self, parent) -> FloatWithSliderWidget | None:
+        return FloatWithSliderProperty.FloatWithSliderWidget(self, parent)
+
+    def set_editor_data(self, editor: FloatWithSliderWidget):
+        editor.spin_box.block_signals(True)
+        editor.slider.block_signals(True)
+        editor.spin_box.set_value(self.value())
+        editor.slider.set_value(self.value())
+        editor.spin_box.block_signals(False)
+        editor.slider.block_signals(False)
+
+    def changing(self, editor: FloatWithSliderWidget):
+        return editor._changing
+
+    def changed(self, editor: FloatWithSliderWidget):
+        return editor._changed
 
 
 class StringProperty(PropertyBase):
 
-    def create_editor(self, parent) -> QWidget | None:
-        return QLineEdit(parent)
+    modal_editor = False
 
-    def get_editor_data(self, editor: QSpinBox):
-        return editor.text()
+    class LineEdit(QLineEdit):
 
-    def set_editor_data(self, editor: QLineEdit):
+        _changed = Signal(str)
+
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            self.returnPressed.connect(self.on_return_pressed)
+
+        def on_return_pressed(self):
+            self._changed.emit(self.text())
+
+    def create_editor(self, parent) -> LineEdit | None:
+        return StringProperty.LineEdit(parent)
+
+    def set_editor_data(self, editor: LineEdit):
         if not isinstance(self.value(), Undefined):
             editor.set_text(self.value())
+
+    def changed(self, editor: LineEdit):
+        return editor._changed
+
+    # def get_editor_data(self, editor):
+    #     return editor.text()
 
 
 class EnumProperty(PropertyBase):
@@ -210,30 +349,28 @@ class EnumProperty(PropertyBase):
 
     modal_editor = False
 
-    @property
-    def enum(self) -> EnumMeta:
-        return type(self.value())
+    class ComboBox(QComboBox):
 
-    @property
-    def enum_values(self) -> list[str]:
-        return [str(e.value) for e in self.enum.__members__.values()]
+        _changed = Signal(EnumMeta)
 
-    def create_editor(self, parent) -> QWidget | None:
-        editor = QComboBox(parent)
-        editor.add_items(self.enum_values)
-        return editor
+        def __init__(self, property: PropertyBase, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
-    def get_editor_data(self, editor: QSpinBox):
-        return self.enum(editor.current_text())
+            self.enum_type = type(property.value())
+            self.add_items([str(e.value) for e in self.enum_type.__members__.values()])
+            self.currentIndexChanged.connect(self.on_current_index_changed)
 
-    def set_editor_data(self, editor: QComboBox):
-        editor.set_current_text(str(self.value().value))
+        def on_current_index_changed(self):
+            self._changed.emit(self.enum_type(self.current_text()))
 
-    def changing(self, editor: QWidget):
-        return None
+    def create_editor(self, parent) -> ComboBox | None:
+        return EnumProperty.ComboBox(self, parent)
 
-    def changed(self, editor: QComboBox):
-        return editor.currentIndexChanged
+    def set_editor_data(self, editor: ComboBox):
+        editor.set_current_text(self.value().value)
+
+    def changed(self, editor: ComboBox):
+        return editor._changed
 
 
 class ColourProperty(PropertyBase):

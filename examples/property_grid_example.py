@@ -63,6 +63,7 @@ class MainWindow(MainWindowBase):
         super().__init__(*args, **kwargs)
 
         self.refresh_button = QPushButton('Refresh')
+        self.refresh_button.clicked.connect(self.app().doc.updated)
 
         self.property_grid = PropertyGrid()
         self.property_grid.set_model(Model())
@@ -88,7 +89,7 @@ class MainWindow(MainWindowBase):
         self.property_grid.set_object(doc.content)
 
     def on_data_changed(self, event: ModelEvent):
-        logger.debug(f'on_data_changed: {event.object()}, {event.name()} -> {event.value()}')
+        logger.debug(f'on_data_changed: {event.name()} -> {event.value()}')
 
         action = SetAttribute(event.name(), event.value(), event.object())
         self.app().action_manager.push(action)
@@ -96,7 +97,7 @@ class MainWindow(MainWindowBase):
         self.app().doc.updated()
 
     def on_data_changing(self, event: ModelEvent):
-        logger.debug(f'on_data_changing: {event.object()}, {event.name()} -> {event.value()}')
+        logger.debug(f'on_data_changing: {event.name()} -> {event.value()}')
 
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ from propertygrid.properties import (
     EnumProperty,
     FloatProperty,
     FloatSliderProperty,
+    FloatWithSliderProperty,
     GradientProperty,
     ImageProperty,
     IntProperty,
@@ -150,7 +151,7 @@ class Model(QAbstractItemModel):
             elif isinstance(value, int) or isinstance(value, UndefinedInt):
                 property_cls = IntProperty
             elif isinstance(value, float):
-                property_cls = FloatSliderProperty
+                property_cls = FloatWithSliderProperty
             elif isinstance(value, str):
                 property_cls = StringProperty
             elif isinstance(value, Enum):

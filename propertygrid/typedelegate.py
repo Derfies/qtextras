@@ -2,7 +2,7 @@
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QItemDelegate, QStyleOptionViewItem, QWidget
 
-from .model import Model
+from .model import Model, ModelEvent
 from .properties import PropertyBase
 
 # noinspection PyUnresolvedReferences
@@ -23,14 +23,14 @@ class TypeDelegate(QItemDelegate):
 
     def set_model_data(self, editor: QWidget, model: Model, index: QModelIndex):
         item = index.internal_pointer()
+        value = item.get_editor_data(editor)
+        event = ModelEvent(item._ref(), item.name(), value)
+        model.data_changed.emit(event)
 
-        # TODO: Might need to expose some way of signalling a dialog cancellation.
-        item.set_new_value(editor)
-
-        # TODO: Might be useful to have this set as part of property grid
-        # constructor, ie having properties set in place might be useful.
-        #item.set_model_data(editor)
-        model.data_changed.emit(index, index)
+    def set_model_changing_data(self, index: QModelIndex, value):
+        item = index.internal_pointer()
+        event = ModelEvent(item._ref(), item.name(), value)
+        index.model().data_changing.emit(event)
 
     def paint_non_modal_editor(self, painter: QPainter, index: QModelIndex, item: PropertyBase):
         editor = item.create_editor(self.parent())
@@ -38,6 +38,8 @@ class TypeDelegate(QItemDelegate):
         if not self.parent().index_widget(index):
             self.parent().set_index_widget(index, editor)
         item.changed(editor).connect(lambda: self.set_model_data(editor, index.model(), index))
+        if item.changing(editor) is not None:
+            item.changing(editor).connect(lambda value: self.set_model_changing_data(index, value))
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
         item = index.internal_pointer()

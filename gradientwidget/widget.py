@@ -75,6 +75,7 @@ class Gradient:
 class GradientWidget(QtWidgets.QWidget):
 
     gradient_changed = Signal()
+    gradient_changing = Signal(Gradient)
 
     def __init__(self, gradient: Gradient | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -188,8 +189,7 @@ class GradientWidget(QtWidgets.QWidget):
     def mouse_press_event(self, event):
         if event.button() == Qt.RightButton:
             index = self._get_event_stop_index(event)
-            if index is not None:
-                self.choose_stop_colour(self._gradient[index])
+            self.remove_stop(index)
         elif event.button() == Qt.LeftButton:
             index = self._get_event_stop_index(event)
 
@@ -202,15 +202,19 @@ class GradientWidget(QtWidgets.QWidget):
             stop = self._gradient[self._drag_index]
             stop.position = event.x() / self.width()
             #self._gradient.validate()
+
+            # TODO: This might be firing the event during a double click...
             self.update()
+            self.gradient_changing.emit(self._gradient)
 
     def mouse_release_event(self, e):
         self._drag_index = None
         self._gradient.validate()
+        self.gradient_changed.emit()
 
     def mouse_double_click_event(self, event):
         index = self._get_event_stop_index(event)
         if index is not None:
-            self.remove_stop(index)
+            self.choose_stop_colour(self._gradient[index])
         else:
             self.add_stop(event.x() / self.width())

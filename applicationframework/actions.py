@@ -69,23 +69,18 @@ class SetAttribute(Edit):
         super().__init__(*args)
         self.name = name
         self.value = value
-
-        # BUG:
-        # In the case of multiple objects, the old value might be undefined which
-        # is a value we don't want to set back to.
         self.old_value = getattr(self.obj, name)
-        #print('old value:', self.old_value)
         self.flags = flags
 
     def undo(self):
         super().undo()
-        logger.info(f'Setting attribute: {self.obj}, {self.name} -> {self.old_value}')
+        logger.info(f'Setting attribute: {self.name} -> {self.old_value}')
         setattr(self.obj, self.name, self.old_value)
         return self.flags
 
     def redo(self):
         super().redo()
-        logger.info(f'Setting attribute: {self.obj}, {self.name} -> {self.value}')
+        logger.info(f'Setting attribute: {self.name} -> {self.value}')
         setattr(self.obj, self.name, self.value)
         return self.flags
 

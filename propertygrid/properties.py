@@ -144,10 +144,10 @@ class FloatProperty(PropertyBase):
         widget = QDoubleSpinBox(parent)
         widget.set_minimum(-1000.0)
         widget.set_maximum(1000.0)
-        widget.set_decimals(3)
+        widget.set_decimals(4)
         return widget
 
-    def get_editor_data(self, editor: QSpinBox):
+    def get_editor_data(self, editor: QDoubleSpinBox):
         return editor.value()
 
     def set_editor_data(self, editor: QDoubleSpinBox):

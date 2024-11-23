@@ -1,3 +1,5 @@
+from typing import Any
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
@@ -23,16 +25,21 @@ class PreferenceWidgetBase(QWidget):
     Should define a panel that can easily be added to the preference dialog, and
     a dict that can be passed when the dialog is dismissed.
 
+    TODO: Maybe use name / label so we can have pretty user string and the string
+    to use to same values against.
+
+    TODO: Would be cool to use marshmallow to do type conversion similar to
+    Django forms.
+
     """
 
     def __init__(self, name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # TODO: Pass default dict in.
         self.name = name
         self.layout = QVBoxLayout(self)
 
-    def get_preferences(self):
+    def get_preferences(self) -> dict[str, Any]:
         ...
 
     def set_preferences(self, data: dict):
@@ -110,8 +117,8 @@ class PreferencesDialog(QDialog):
         self.stacked_widget.set_current_index(index.row())
 
     def load_preferences(self, data: dict):
-        for key, widget in self.widgets.items():
-            widget.set_preferences(data[key])
+        for key, value in data.items():
+            self.widgets[key].set_preferences(value)
 
     def save_preferences(self):
         """Save the preferences when OK is pressed."""

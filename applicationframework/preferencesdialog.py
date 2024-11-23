@@ -35,6 +35,9 @@ class PreferenceWidgetBase(QWidget):
     def get_preferences(self):
         ...
 
+    def set_preferences(self, data: dict):
+        ...
+
 
 class PreferencesDialog(QDialog):
 
@@ -46,24 +49,13 @@ class PreferencesDialog(QDialog):
 
     """
 
-    def __init__(self):
-        super().__init__()
-        self.set_window_title("Preferences")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_window_title('Preferences')
         self.resize(600, 400)
 
         self.widgets = {}
-
-        # Dictionary to store preferences
-        # TODO: Expose this to pass in and populate all panes.
-        # self.preferences = {
-        #     "username": "",
-        #     "notifications": False,
-        #     "theme": "",
-        #     "font_size": "",
-        #     "proxy_server": "",
-        #     "port": "",
-        #     "use_https": False,
-        # }
+        self.preferences = {}
 
         # Create the main layout
         main_layout = QVBoxLayout(self)
@@ -117,10 +109,13 @@ class PreferencesDialog(QDialog):
         index = self.tree_view.selection_model().current_index()
         self.stacked_widget.set_current_index(index.row())
 
+    def load_preferences(self, data: dict):
+        for key, widget in self.widgets.items():
+            widget.set_preferences(data[key])
+
     def save_preferences(self):
         """Save the preferences when OK is pressed."""
         self.preferences = {}
         for key, widget in self.widgets.items():
             self.preferences[key] = widget.get_preferences()
-        print("Preferences saved:", self.preferences)
         self.accept()  # Close the dialog

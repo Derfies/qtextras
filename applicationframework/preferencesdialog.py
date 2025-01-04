@@ -45,7 +45,7 @@ class PreferenceWidgetBase(QWidget):
     def preferences(self) -> dict[str, Any]:
         ...
 
-    def set_preferences(self, data: dict):
+    def set_preferences(self, data):
         ...
 
 

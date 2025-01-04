@@ -54,8 +54,6 @@ class PreferencesDialog(QDialog):
     """
     TODO: Figure out where to save this (QSettings or json blob)
     TODO: Figure out if these are project-centric or application centric (maybe both)?
-    TODO: Initial selection
-    TODO: Initial values
 
     """
 
@@ -70,30 +68,29 @@ class PreferencesDialog(QDialog):
         # Create the main layout
         main_layout = QVBoxLayout(self)
 
-        # Create a horizontal layout for the content
-        #content_layout = QHBoxLayout()
+        # Create a horizontal layout for the content.
         self.hsplitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Create the tree view for categories
+        # Create the tree view for categories.
         self.tree_view = QTreeView()
         self.tree_view.set_header_hidden(True)
         self.tree_model = QStandardItemModel()
         self.tree_view.set_model(self.tree_model)
 
-        # Create a stacked widget to show the content of each category
+        # Create a stacked widget to show the content of each category.
         self.stacked_widget = QStackedWidget()
 
-        # Connect the tree selection to the stacked widget
+        # Connect the tree selection to the stacked widget.
         self.tree_view.selection_model().selectionChanged.connect(self.on_selection_changed)
 
-        # Add the tree view and stacked widget to the content layout
+        # Add the tree view and stacked widget to the content layout.
         self.hsplitter.add_widget(self.tree_view)
         self.hsplitter.add_widget(self.stacked_widget)
 
-        # Add content layout to the main layout
+        # Add content layout to the main layout.
         main_layout.add_widget(self.hsplitter)
 
-        # Add OK and Cancel buttons in a horizontal layout
+        # Add OK and Cancel buttons in a horizontal layout.
         self.ok_button = QPushButton('OK')
         self.cancel_button = QPushButton('Cancel')
         self.ok_button.clicked.connect(self.save_preferences)
@@ -104,7 +101,7 @@ class PreferencesDialog(QDialog):
         button_layout.add_widget(self.ok_button)
         button_layout.add_widget(self.cancel_button)
 
-        # Anchor the button layout to the bottom
+        # Anchor the button layout to the bottom.
         main_layout.add_layout(button_layout)
 
     def show_event(self, event: QEvent):
@@ -112,7 +109,6 @@ class PreferencesDialog(QDialog):
         root_index = self.tree_view.root_index()
         first_item_index = self.tree_model.index(0, 0, root_index)  # First item under the root index
         self.tree_view.set_current_index(first_item_index)
-        #self.stacked_widget.set_current_index(0)
 
     def add_widget(self, widget: PreferenceWidgetBase):
         item = QStandardItem(widget.title)

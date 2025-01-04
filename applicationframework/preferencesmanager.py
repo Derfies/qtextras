@@ -1,6 +1,5 @@
 import logging
-import os
-from collections import defaultdict
+from dataclasses import fields
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QSplitter, QWidget
@@ -15,21 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 OBJECT_GROUP = 'objects'
+DATACLASS_GROUP = 'dataclass'
 WIDGET_GROUP = 'widgets'
 
 
 class PreferencesManager:
-
-    """
-    Quickly becoming unwieldy if we want this to save all sorts of preferences.
-
-    TODO: using marshmallow might be a nice way to store aribtrary dataclass
-    instance values.
-
-    TODO: The total set of widget attributes is assumed, can we do the same for
-    arbitrary objects? We could if they were a dataclass...
-
-    """
 
     def __init__(self):
         """
@@ -38,36 +27,37 @@ class PreferencesManager:
 
         """
         self._settings = QSettings()
-        self._objects = defaultdict(list)
+        self._dataclasses = {}
         self._widgets = {}
         logger.debug(f'Settings file: {self._settings.file_name()}')
 
-    def register_object(self, name: str, obj: object, member_name: str):
-        default = getattr(obj, member_name)
-        self._objects[name].append((obj, member_name, default))
+    def register_dataclass(self, name: str, obj: object):
+        self._dataclasses[name] = obj
 
     def register_widget(self, name: str, widget: QWidget):
         self._widgets[name] = widget
 
-    def _load_object(self, name, object_data):
+    def _load_dataclass(self, name: str, dataclass):
         self._settings.begin_group(name)
-        for obj, attr, default in object_data:
+        for field in fields(dataclass):
+            if field.name not in self._settings.all_keys():
+                continue
 
             # This is stupid.
             kwargs = {}
-            if isinstance(default, bool):
+            if isinstance(getattr(dataclass, field.name), bool):
                 kwargs['type'] = bool
-            value = self._settings.value(attr, defaultValue=default, **kwargs)
-            logger.debug(f'Loading object preference: {name} attr: {attr} value: {value} type: {type(value)} default: {default} default type: {type(default)}')
-            setattr(obj, attr, value)
+            value = self._settings.value(field.name, **kwargs)
+            logger.debug(f'Loading dataclass preference: {name} field: {field.name} value: {value}')
+            setattr(dataclass, field.name, value)
         self._settings.end_group()
-        
-    def _save_object(self, name, object_data):
+
+    def _save_dataclass(self, name: str, dataclass):
         self._settings.begin_group(name)
-        for obj, attr, _ in object_data:
-            value = getattr(obj, attr)
-            logger.debug(f'Saving object preference: {name} attr: {attr} value: {value} type: {type(value)}')
-            self._settings.set_value(attr, value)
+        for field in fields(dataclass):
+            value = getattr(dataclass, field.name)
+            logger.debug(f'Saving dataclass preference: {name} field: {field.name} value: {value}')
+            self._settings.set_value(field.name, value)
         self._settings.end_group()
 
     def _load_widget(self, name: str, widget: QWidget):
@@ -98,16 +88,16 @@ class PreferencesManager:
             self._settings.set_value(attr, value)
         self._settings.end_group()
 
-    def _load_objects(self):
-        self._settings.begin_group(OBJECT_GROUP)
-        for name, object_data in self._objects.items():
-            self._load_object(name, object_data)
+    def _load_dataclasses(self):
+        self._settings.begin_group(DATACLASS_GROUP)
+        for name, dataclass in self._dataclasses.items():
+            self._load_dataclass(name, dataclass)
         self._settings.end_group()
 
-    def _save_objects(self):
-        self._settings.begin_group(OBJECT_GROUP)
-        for name, object_data in self._objects.items():
-            self._save_object(name, object_data)
+    def _save_dataclasses(self):
+        self._settings.begin_group(DATACLASS_GROUP)
+        for name, dataclass in self._dataclasses.items():
+            self._save_dataclass(name, dataclass)
         self._settings.end_group()
 
     def _load_widgets(self):
@@ -124,11 +114,11 @@ class PreferencesManager:
 
     def load(self):
         logger.debug(f'Loading preferences from: {self._settings.file_name()}')
-        self._load_objects()
+        self._load_dataclasses()
         self._load_widgets()
 
     def save(self):
         logger.debug(f'Saving preferences to: {self._settings.file_name()}')
         self._settings.clear()
-        self._save_objects()
+        self._save_dataclasses()
         self._save_widgets()

@@ -1,6 +1,6 @@
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QDialog,
@@ -33,13 +33,16 @@ class PreferenceWidgetBase(QWidget):
 
     """
 
-    def __init__(self, name: str, *args, **kwargs):
+    def __init__(self, title: str, name: str | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.title = title
+        if name is None:
+            name = self.title.lower().replace(' ', '_')
         self.name = name
         self.layout = QVBoxLayout(self)
 
-    def get_preferences(self) -> dict[str, Any]:
+    def preferences(self) -> dict[str, Any]:
         ...
 
     def set_preferences(self, data: dict):
@@ -104,8 +107,15 @@ class PreferencesDialog(QDialog):
         # Anchor the button layout to the bottom
         main_layout.add_layout(button_layout)
 
+    def show_event(self, event: QEvent):
+        """Select the first listbox item if there is one."""
+        root_index = self.tree_view.root_index()
+        first_item_index = self.tree_model.index(0, 0, root_index)  # First item under the root index
+        self.tree_view.set_current_index(first_item_index)
+        #self.stacked_widget.set_current_index(0)
+
     def add_widget(self, widget: PreferenceWidgetBase):
-        item = QStandardItem(widget.name)
+        item = QStandardItem(widget.title)
         item.set_editable(False)
         self.tree_model.append_row(item)
         self.stacked_widget.add_widget(widget)
@@ -124,5 +134,5 @@ class PreferencesDialog(QDialog):
         """Save the preferences when OK is pressed."""
         self.preferences = {}
         for key, widget in self.widgets.items():
-            self.preferences[key] = widget.get_preferences()
+            self.preferences[key] = widget.preferences()
         self.accept()  # Close the dialog

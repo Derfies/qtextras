@@ -13,11 +13,14 @@ class OpenRecentMenu(QMenu):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.paths: list[Path] = []
+        self._paths: list[Path] = []
+        
+    def paths(self):
+        return self._paths
 
     def update_actions(self):
         self.clear()
-        for path in self.paths:
+        for path in self._paths:
             open_action = QAction(str(path), self)
             open_action.set_data(path)
             open_action.triggered.connect(partial(self.parent().open_event, open_action.data()))
@@ -33,10 +36,17 @@ class OpenRecentMenu(QMenu):
 
     def add_file_path(self, file_path: str):
         path = Path(file_path)
-        if path not in self.paths:
-            self.paths.append(path)
+        if path not in self._paths:
+            self._paths.append(path)
+        self.update_actions()
+
+    def set_file_paths(self, file_paths: list[str]):
+        for file_path in file_paths:
+            path = Path(file_path)
+            if path not in self._paths:
+                self._paths.append(path)
         self.update_actions()
 
     def clear_file_paths(self):
-        self.paths = []
+        self._paths = []
         self.update_actions()

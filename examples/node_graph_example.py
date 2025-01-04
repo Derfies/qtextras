@@ -222,7 +222,7 @@ class MainWindow(MainWindowBase):
         self.window.set_layout(self.layout)
         self.set_central_widget(self.window)
 
-        self.widget_manager.register_widget('main_splitter', self.splitter)
+        self.app().preferences_manager.register_widget('main_splitter', self.splitter)
 
         self.view.fit_in_view(self.scene.scene_rect(), Qt.AspectRatioMode.KeepAspectRatio)
 

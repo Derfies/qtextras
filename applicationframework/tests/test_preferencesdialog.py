@@ -17,7 +17,7 @@ class TestPreferenceWidget(PreferenceWidgetBase):
         self.baz = QLineEdit()
         self.qux = QLineEdit()
 
-    def get_preferences(self):
+    def preferences(self):
         return {
             'baz': self.baz.text(),
             'qux': self.qux.text(),

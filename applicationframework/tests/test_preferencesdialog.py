@@ -45,7 +45,7 @@ class PreferencesDialogTestCase(TestCase):
         """
         self.app = Application.instance()
         if self.app is None:
-            self.app = Application([])
+            self.app = Application('mycompany', 'Test Application')
 
     def tearDown(self):
         """

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBo
 from applicationframework.application import Application
 from applicationframework.document import Document
 from applicationframework.openrecentmenu import OpenRecentMenu
-from applicationframework.widgetmanager import WidgetManager
+from applicationframework.preferencesmanager import PreferencesManager
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -15,10 +15,9 @@ from __feature__ import snake_case
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, company_name: str, app_name: str, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.app_name = app_name
         self.app().updated.connect(self.update_event)
 
         # TODO: Move to create_menubar?
@@ -30,9 +29,8 @@ class MainWindow(QMainWindow):
         self.connect_hotkeys()
         self.create_menu_bar()
 
-        self.widget_manager = WidgetManager(company_name, self.app_name)
-        self.widget_manager.register_widget('main_window', self)
-        self.widget_manager.register_widget('open_recent_menu', self.open_recent_menu)
+        self.app().preferences_manager.register_widget('main_window', self)
+        self.app().preferences_manager.register_widget('open_recent_menu', self.open_recent_menu)
 
         # Default state is an empty document.
         self.app().doc = self.create_document()
@@ -125,7 +123,7 @@ class MainWindow(QMainWindow):
         self.redo_action.set_enabled(redo_enabled)
 
     def update_window_title(self):
-        title = ''.join([self.app_name, ' - ', self.app().doc.title])
+        title = ''.join([self.app().application_name(), ' - ', self.app().doc.title])
         if self.app().doc.dirty:
             title += ' *'
         self.set_window_title(title)
@@ -147,13 +145,13 @@ class MainWindow(QMainWindow):
         return True
 
     def show_event(self, event):
-        self.widget_manager.load_settings()
+        self.app().preferences_manager.load()
 
     def close_event(self, event):
         if not self.check_for_save():
             event.ignore()
             return False
-        self.widget_manager.save_settings()
+        self.app().preferences_manager.save()
         return True
 
     def new_event(self):

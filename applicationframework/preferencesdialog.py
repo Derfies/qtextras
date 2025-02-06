@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
+QTreeWidgetItem,
+QTreeWidget,
 )
 
 # noinspection PyUnresolvedReferences
@@ -72,10 +74,10 @@ class PreferencesDialog(QDialog):
         self.hsplitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Create the tree view for categories.
-        self.tree_view = QTreeView()
+        self.tree_view = QTreeWidget()
         self.tree_view.set_header_hidden(True)
-        self.tree_model = QStandardItemModel()
-        self.tree_view.set_model(self.tree_model)
+        #self.tree_model = QStandardItemModel()
+        #self.tree_view.set_model(self.tree_model)
 
         # Create a stacked widget to show the content of each category.
         self.stacked_widget = QStackedWidget()
@@ -104,25 +106,68 @@ class PreferencesDialog(QDialog):
         # Anchor the button layout to the bottom.
         main_layout.add_layout(button_layout)
 
-    def show_event(self, event: QEvent):
-        """Select the first listbox item if there is one."""
-        root_index = self.tree_view.root_index()
-        first_item_index = self.tree_model.index(0, 0, root_index)  # First item under the root index
-        self.tree_view.set_current_index(first_item_index)
+    # def show_event(self, event: QEvent):
+    #     """Select the first listbox item if there is one."""
+    #     root_index = self.tree_view.root_index()
+    #     first_item_index = self.tree_model.index(0, 0, root_index)  # First item under the root index
+    #     self.tree_view.set_current_index(first_item_index)
 
-    def add_widget(self, widget: PreferenceWidgetBase):
-        item = QStandardItem(widget.title)
-        item.set_editable(False)
-        self.tree_model.append_row(item)
+    # def get_absolute_row(self, item):
+    #     """ Computes the absolute row of the given QTreeWidgetItem """
+    #
+    #     def count_items(root_item, target_item, count=0):
+    #         """ Recursively count items to find the absolute row. """
+    #         for i in range(root_item.child_count()):
+    #             child = root_item.child(i)
+    #             count += 1
+    #             if child == target_item:
+    #                 return count
+    #             count = count_items(child, target_item, count)
+    #         return count
+    #
+    #     if item is None:
+    #         return -1  # Invalid item
+    #
+    #     count = 0
+    #     for i in range(self.tree_view.top_level_item_count()):
+    #         root_item = self.tree_view.top_level_item(i)
+    #         if root_item == item:
+    #             return count
+    #         count += 1
+    #         result = count_items(root_item, item, count)
+    #         if result > count:
+    #             return result
+    #         count = result
+    #
+    #     return -1  # Not found
+
+    def add_widget(self, widget: PreferenceWidgetBase, parent=None):
+        if parent is None:
+            parent = self.tree_view
+        item = QTreeWidgetItem(parent)#idget.title)
+        item.set_data(0, Qt.UserRole, widget)  # Qt.UserRole = 256
+
+        item.set_text(0, widget.title)
+
+        #item.set_editable(False)
+        #self.tree_model.append_row(item)
         self.stacked_widget.add_widget(widget)
         self.widgets[widget.name] = widget
 
+        return item
+
     def on_selection_changed(self, selected, deselected):
         """Handle changes in the tree view selection."""
-        index = self.tree_view.selection_model().current_index()
-        self.stacked_widget.set_current_index(index.row())
+        item = self.tree_view.selected_items()[0]
+
+        widget = item.data(0, Qt.UserRole)
+        #print(pane)
+        #print(item, self.get_absolute_row(item))
+        #print('SET:', index.row())
+        self.stacked_widget.set_current_widget(widget)
 
     def load_preferences(self, data: dict):
+        return
         for key, value in data.items():
             self.widgets[key].set_preferences(value)
 

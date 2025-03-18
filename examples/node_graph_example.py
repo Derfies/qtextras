@@ -248,8 +248,8 @@ class MainWindow(MainWindowBase):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app = Application(sys.argv)
+    app = Application(DEFAULT_COMPANY_NAME, DEFAULT_APP_NAME, sys.argv)
     qdarktheme.setup_theme()
-    window = MainWindow(DEFAULT_COMPANY_NAME, DEFAULT_APP_NAME)
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())

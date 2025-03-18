@@ -1,7 +1,6 @@
 from typing import Any
 
-from PySide6.QtCore import QEvent, Qt
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -10,11 +9,10 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSplitter,
     QStackedWidget,
-    QTreeView,
+    QTreeWidget,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
-QTreeWidgetItem,
-QTreeWidget,
 )
 
 # noinspection PyUnresolvedReferences

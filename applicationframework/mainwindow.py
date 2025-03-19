@@ -143,10 +143,10 @@ class MainWindow(QMainWindow):
                 return False
         return True
 
-    def show_event(self, event):
+    def showEvent(self, event):
         self.app().preferences_manager.load()
 
-    def close_event(self, event):
+    def closeEvent(self, event):
         if not self.check_for_save():
             event.ignore()
             return False

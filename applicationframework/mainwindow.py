@@ -34,7 +34,8 @@ class MainWindow(QMainWindow):
         # Default state is an empty document.
         self.app().doc = self.create_document()
 
-    def app(self) -> QCoreApplication:
+    @staticmethod
+    def app() -> QCoreApplication:
         return QApplication.instance()
 
     @property

@@ -140,6 +140,8 @@ class Model(QAbstractItemModel):
             # way.
             if isinstance(value, QColor):
                 value = QColor(value)
+            elif isinstance(value, FilePathQImage):
+                value = FilePathQImage(value.file_path)
             else:
                 value = copy.deepcopy(value)
 

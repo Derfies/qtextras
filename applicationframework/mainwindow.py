@@ -1,16 +1,15 @@
 from enum import Flag
 from pathlib import Path
 
+from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
 
-from applicationframework.application import Application
 from applicationframework.document import Document
 from applicationframework.openrecentmenu import OpenRecentMenu
-from applicationframework.preferencesmanager import PreferencesManager
 
 # noinspection PyUnresolvedReferences
-from __feature__ import snake_case
+# from __feature__ import snake_case
 
 
 class MainWindow(QMainWindow):
@@ -20,9 +19,9 @@ class MainWindow(QMainWindow):
 
         self.app().updated.connect(self.update_event)
 
-        # TODO: Move to create_menubar?
+        # TODO: Move to create_menu_bar?
         self.open_recent_menu = OpenRecentMenu('&Open Recent', parent=self)
-        self.open_recent_menu.set_icon(self.get_icon('folder-open.png'))
+        self.open_recent_menu.setIcon(self.get_icon('folder-open.png'))
 
         self.create_actions()
         self.connect_actions()
@@ -35,7 +34,8 @@ class MainWindow(QMainWindow):
         # Default state is an empty document.
         self.app().doc = self.create_document()
 
-    def app(self) -> Application:
+    @staticmethod
+    def app() -> QCoreApplication:
         return QApplication.instance()
 
     @property
@@ -79,34 +79,34 @@ class MainWindow(QMainWindow):
     def connect_hotkeys(self):
 
         # File actions.
-        self.save_action.set_shortcut(QKeySequence('Ctrl+S'))
+        self.save_action.setShortcut(QKeySequence('Ctrl+S'))
 
         # Edit actions.
-        self.undo_action.set_shortcut(QKeySequence('Ctrl+Z'))
-        self.redo_action.set_shortcut(QKeySequence('Ctrl+Shift+Z'))
-        self.copy_action.set_shortcut(QKeySequence('Ctrl+C'))
-        self.paste_action.set_shortcut(QKeySequence('Ctrl+V'))
+        self.undo_action.setShortcut(QKeySequence('Ctrl+Z'))
+        self.redo_action.setShortcut(QKeySequence('Ctrl+Shift+Z'))
+        self.copy_action.setShortcut(QKeySequence('Ctrl+C'))
+        self.paste_action.setShortcut(QKeySequence('Ctrl+V'))
 
     def create_menu_bar(self):
-        menu_bar = self.menu_bar()
+        menuBar = self.menuBar()
 
         # File menu.
-        self.file_menu = menu_bar.add_menu('&File')
-        self.file_menu.add_action(self.new_action)
-        self.file_menu.add_action(self.open_action)
-        self.file_menu.add_menu(self.open_recent_menu)
-        self.file_menu.add_action(self.save_action)
-        self.file_menu.add_action(self.save_as_action)
-        self.file_menu.add_separator()
-        self.file_menu.add_action(self.exit_action)
+        self.file_menu = menuBar.addMenu('&File')
+        self.file_menu.addAction(self.new_action)
+        self.file_menu.addAction(self.open_action)
+        self.file_menu.addMenu(self.open_recent_menu)
+        self.file_menu.addAction(self.save_action)
+        self.file_menu.addAction(self.save_as_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.exit_action)
 
         # Edit menu.
-        self.edit_menu = menu_bar.add_menu('&Edit')
-        self.edit_menu.add_action(self.undo_action)
-        self.edit_menu.add_action(self.redo_action)
-        self.edit_menu.add_separator()
-        self.edit_menu.add_action(self.copy_action)
-        self.edit_menu.add_action(self.paste_action)
+        self.edit_menu = menuBar.addMenu('&Edit')
+        self.edit_menu.addAction(self.undo_action)
+        self.edit_menu.addAction(self.redo_action)
+        self.edit_menu.addSeparator()
+        self.edit_menu.addAction(self.copy_action)
+        self.edit_menu.addAction(self.paste_action)
 
     def create_document(self, file_path: str = None) -> Document:
         raise NotImplementedError
@@ -118,15 +118,15 @@ class MainWindow(QMainWindow):
 
         # Edit actions.
         undo_enabled = bool(self.app().action_manager.undos)
-        self.undo_action.set_enabled(undo_enabled)
+        self.undo_action.setEnabled(undo_enabled)
         redo_enabled = bool(self.app().action_manager.redos)
-        self.redo_action.set_enabled(redo_enabled)
+        self.redo_action.setEnabled(redo_enabled)
 
     def update_window_title(self):
-        title = ''.join([self.app().application_name(), ' - ', self.app().doc.title])
+        title = ''.join([self.app().applicationName(), ' - ', self.app().doc.title])
         if self.app().doc.dirty:
             title += ' *'
-        self.set_window_title(title)
+        self.setWindowTitle(title)
 
     def check_for_save(self) -> bool:
         if self.app().doc.dirty:
@@ -144,10 +144,10 @@ class MainWindow(QMainWindow):
                 return False
         return True
 
-    def show_event(self, event):
+    def showEvent(self, event):
         self.app().preferences_manager.load()
 
-    def close_event(self, event):
+    def closeEvent(self, event):
         if not self.check_for_save():
             event.ignore()
             return False
@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
         # when triggered.
         if self.check_for_save():
             if not file_path:
-                file_path, file_format = QFileDialog.get_open_file_name()
+                file_path, file_format = QFileDialog.getOpenFileName()
             if file_path:
                 self.open_recent_menu.add_file_path(file_path)
                 self.app().doc = self.create_document(file_path)
@@ -177,7 +177,7 @@ class MainWindow(QMainWindow):
 
     def save_event(self, save_as: bool = False):
         if self.app().doc.file_path is None or save_as:
-            file_path, file_format = QFileDialog.get_save_file_name()
+            file_path, file_format = QFileDialog.getSaveFileName()
             if not file_path:
                 return False
             self.app().doc.file_path = file_path

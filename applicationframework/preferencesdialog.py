@@ -1,7 +1,6 @@
 from typing import Any
 
-from PySide6.QtCore import QEvent, Qt
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -10,7 +9,8 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSplitter,
     QStackedWidget,
-    QTreeView,
+    QTreeWidget,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -72,10 +72,8 @@ class PreferencesDialog(QDialog):
         self.hsplitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Create the tree view for categories.
-        self.tree_view = QTreeView()
+        self.tree_view = QTreeWidget()
         self.tree_view.set_header_hidden(True)
-        self.tree_model = QStandardItemModel()
-        self.tree_view.set_model(self.tree_model)
 
         # Create a stacked widget to show the content of each category.
         self.stacked_widget = QStackedWidget()
@@ -104,23 +102,22 @@ class PreferencesDialog(QDialog):
         # Anchor the button layout to the bottom.
         main_layout.add_layout(button_layout)
 
-    def show_event(self, event: QEvent):
-        """Select the first listbox item if there is one."""
-        root_index = self.tree_view.root_index()
-        first_item_index = self.tree_model.index(0, 0, root_index)  # First item under the root index
-        self.tree_view.set_current_index(first_item_index)
-
-    def add_widget(self, widget: PreferenceWidgetBase):
-        item = QStandardItem(widget.title)
-        item.set_editable(False)
-        self.tree_model.append_row(item)
+    def add_widget(self, widget: PreferenceWidgetBase, parent=None):
+        if parent is None:
+            parent = self.tree_view
+        item = QTreeWidgetItem(parent)
+        item.set_data(0, Qt.UserRole, widget)
+        item.set_text(0, widget.title)
         self.stacked_widget.add_widget(widget)
         self.widgets[widget.name] = widget
 
+        return item
+
     def on_selection_changed(self, selected, deselected):
         """Handle changes in the tree view selection."""
-        index = self.tree_view.selection_model().current_index()
-        self.stacked_widget.set_current_index(index.row())
+        item = self.tree_view.selected_items()[0]
+        widget = item.data(0, Qt.UserRole)
+        self.stacked_widget.set_current_widget(widget)
 
     def load_preferences(self, data: dict):
         for key, value in data.items():

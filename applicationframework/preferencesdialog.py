@@ -120,7 +120,6 @@ class PreferencesDialog(QDialog):
         self.stacked_widget.set_current_widget(widget)
 
     def load_preferences(self, data: dict):
-        return
         for key, value in data.items():
             self.widgets[key].set_preferences(value)
 

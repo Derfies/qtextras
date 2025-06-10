@@ -43,10 +43,12 @@ class PreferencesManager:
             if field.name not in self._settings.all_keys():
                 continue
 
-            # This is stupid.
+            # This is stupid. Seems like we actually have to force types.
             kwargs = {}
             if isinstance(getattr(dataclass, field.name), bool):
                 kwargs['type'] = bool
+            elif isinstance(getattr(dataclass, field.name), float):
+                kwargs['type'] = float
             value = self._settings.value(field.name, **kwargs)
             logger.debug(f'Loading dataclass preference: {name} field: {field.name} value: {value}')
             setattr(dataclass, field.name, value)

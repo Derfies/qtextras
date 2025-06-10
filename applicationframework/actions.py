@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 class Base(metaclass=abc.ABCMeta):
 
+    def __init__(self, flags: Flag | None = None):
+        self.flags = flags
+
     def __call__(self):
         return self.redo()
 
@@ -31,9 +34,10 @@ class Base(metaclass=abc.ABCMeta):
 
 class Composite(Base):
 
-    def __init__(self, actions, flags: Flag | None = None):
+    def __init__(self, actions: list[Base], **kwargs):
+        super().__init__(**kwargs)
+
         self.actions = actions
-        self.flags = flags
 
     def undo(self):
         for action in reversed(self.actions):
@@ -52,7 +56,8 @@ class Composite(Base):
 
 class Edit(Base):
 
-    def __init__(self, obj):
+    def __init__(self, obj, **kwargs):
+        super().__init__(**kwargs)
 
         # TODO: Maybe don't use weak ref, as certain actions that remove an
         # object (and thus result in it being garbage collected) are never
@@ -63,25 +68,37 @@ class Edit(Base):
 
 class SetAttribute(Edit):
 
-    def __init__(self, name, value, *args, flags: Flag | None = None):
-
-        # Should flags be in base edit class?
+    def __init__(self, name, value, *args):
         super().__init__(*args)
         self.name = name
         self.value = value
         self.old_value = getattr(self.obj, name)
-        self.flags = flags
 
     def undo(self):
-        super().undo()
-        logger.info(f'Setting attribute: {self.name} -> {self.old_value}')
         setattr(self.obj, self.name, self.old_value)
         return self.flags
 
     def redo(self):
-        super().redo()
-        logger.info(f'Setting attribute: {self.name} -> {self.value}')
         setattr(self.obj, self.name, self.value)
+        return self.flags
+
+
+class SetKey(Edit):
+
+    def __init__(self, key, value, *args):
+        super().__init__(*args)
+        self.key = key
+        self.value = value
+
+        # TODO: use old_in to potentially delete a key...?
+        self.old_value = self.obj.get(key)
+
+    def undo(self):
+        self.obj[self.key] = self.old_value
+        return self.flags
+
+    def redo(self):
+        self.obj[self.key] = self.value
         return self.flags
 
 

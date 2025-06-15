@@ -1,5 +1,6 @@
 import logging
 from dataclasses import fields
+from decimal import Decimal
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QSplitter, QWidget
@@ -45,12 +46,14 @@ class PreferencesManager:
 
             # This is stupid. Seems like we actually have to force types.
             kwargs = {}
-            if isinstance(getattr(dataclass, field.name), bool):
+            if field.type == bool:
                 kwargs['type'] = bool
-            elif isinstance(getattr(dataclass, field.name), float):
+            elif field.type == float:
                 kwargs['type'] = float
             value = self._settings.value(field.name, **kwargs)
-            logger.debug(f'Loading dataclass preference: {name} field: {field.name} value: {value}')
+            if field.type == Decimal:
+               value = Decimal(value)
+            logger.debug(f'Loading dataclass preference: {name} field: {field.name} value: {value} type: {type(value)}')
             setattr(dataclass, field.name, value)
         self._settings.end_group()
 
@@ -58,7 +61,9 @@ class PreferencesManager:
         self._settings.begin_group(name)
         for field in fields(dataclass):
             value = getattr(dataclass, field.name)
-            logger.debug(f'Saving dataclass preference: {name} field: {field.name} value: {value}')
+            if isinstance(value, Decimal):
+                value = str(value)
+            logger.debug(f'Saving dataclass preference: {name} field: {field.name} value: {value} type: {type(value)}')
             self._settings.set_value(field.name, value)
         self._settings.end_group()
 

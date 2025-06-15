@@ -1,9 +1,15 @@
+from decimal import Decimal
 from typing import Any
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QDoubleValidator, QIntValidator, QValidator
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
+    QGridLayout,
     QHBoxLayout,
+    QLabel,
+    QLineEdit,
     QPushButton,
     QSizePolicy,
     QSpacerItem,
@@ -14,6 +20,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from customwidgets.colourpicker import ColourPicker
 
 # noinspection PyUnresolvedReferences
 from __feature__ import snake_case
@@ -47,6 +55,76 @@ class PreferenceWidgetBase(QWidget):
 
     def set_preferences(self, data):
         ...
+
+
+class ManagedPreferenceWidgetBase(PreferenceWidgetBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._grid_layout = QGridLayout()
+        self.layout.add_layout(self._grid_layout)
+        self.layout.add_stretch()
+        self._widgets = {}
+
+    def _get_widget_value(self, widget: QWidget):
+        if isinstance(widget, QCheckBox):
+            value = widget.is_checked()
+        elif isinstance(widget, QLineEdit):
+            value = widget.text()
+        elif isinstance(widget, ColourPicker):
+            value = widget.colour()
+        else:
+            raise Exception(f'Unknown widget type: {widget}')
+
+        # Seems a decent assumption to cast to the type indicated by the
+        # validator.
+        if hasattr(widget, 'validator'):
+            if isinstance(widget.validator(), QIntValidator):
+                value = int(value)
+            elif isinstance(widget.validator(), QDoubleValidator):
+                value = Decimal(value)
+        return value
+
+    def _set_widget_value(self, widget: QWidget, value: Any):
+        if isinstance(widget, QCheckBox):
+            return widget.set_checked(value)
+        elif isinstance(widget, QLineEdit):
+            return widget.set_text(str(value))
+        elif isinstance(widget, ColourPicker):
+            return widget.set_colour(QColor(*value))
+        else:
+            raise Exception(f'Unknown widget type: {widget}')
+
+    def add_managed_widget(
+        self,
+        title: str,
+        widget: QWidget,
+        validator: QValidator | None = None,
+        name: str | None = None,
+    ):
+        name = title.lower().replace(' ', '_') or name
+        assert name not in self._widgets, f'Duplicate widget name: {name}'
+        if validator is not None:
+            widget.set_validator(validator)
+        label = QLabel(title)
+        next_row_idx = len(self._widgets)
+        self._grid_layout.add_widget(label, next_row_idx, 0)
+        self._grid_layout.add_widget(widget, next_row_idx, 1)
+        self._widgets[name] = widget
+
+    def preferences(self) -> dict[str, Any]:
+        return {
+            name: self._get_widget_value(widget)
+            for name, widget in self._widgets.items()
+        }
+
+    def set_preferences(self, data: dict[str, Any]):
+        for key, value in data.items():
+            if key not in self._widgets:
+                continue
+            widget = self._widgets[key]
+            self._set_widget_value(widget, value)
 
 
 class PreferencesDialog(QDialog):

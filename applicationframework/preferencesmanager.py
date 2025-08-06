@@ -70,7 +70,8 @@ class PreferencesManager:
     def _load_widget(self, name: str, widget: QWidget):
         self._settings.begin_group(name)
         for attr, method_name in (
-            ('rect', 'set_geometry'),
+            ('rect', 'restore_geometry'),
+            ('state', 'restore_state'),
             ('splitter_settings', 'restore_state'),
             ('recent_file_paths', 'set_file_paths'),
         ):
@@ -84,11 +85,12 @@ class PreferencesManager:
     def _save_widget(self, name: str, widget: QWidget):
         self._settings.begin_group(name)
         for widget_cls, attr, method_name in (
-            (QWidget, 'rect', 'geometry'),
+            (QWidget, 'state', 'save_state'),
+            (QWidget, 'rect', 'save_geometry'),
             (QSplitter, 'splitter_settings', 'save_state'),
             (OpenRecentMenu, 'recent_file_paths', 'paths'),
         ):
-            if not isinstance(widget, widget_cls):
+            if not isinstance(widget, widget_cls) or not hasattr(widget, method_name):
                 continue
             value = getattr(widget, method_name)()
             logger.debug(f'Saving widget preference: {name} attr: {attr} value: {value}')

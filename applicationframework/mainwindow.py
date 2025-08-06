@@ -2,7 +2,7 @@ from enum import Flag
 from pathlib import Path
 
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QToolBar
 
 from applicationframework.application import Application
 from applicationframework.document import Document
@@ -45,6 +45,11 @@ class MainWindow(QMainWindow):
     def get_icon(self, file_name: str, icons_path: Path = None) -> QIcon:
         icons_path = icons_path or self.icons_path
         return QIcon(str(icons_path.joinpath(file_name)))
+
+    def tool_bar(self) -> QToolBar:
+        tool_bar = QToolBar()
+        self.add_tool_bar(tool_bar)
+        return tool_bar
 
     def create_actions(self):
 

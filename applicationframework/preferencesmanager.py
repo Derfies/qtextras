@@ -1,5 +1,6 @@
 import logging
 from dataclasses import fields
+from decimal import Decimal
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QSplitter, QWidget
@@ -43,12 +44,16 @@ class PreferencesManager:
             if field.name not in self._settings.all_keys():
                 continue
 
-            # This is stupid.
+            # This is stupid. Seems like we actually have to force types.
             kwargs = {}
-            if isinstance(getattr(dataclass, field.name), bool):
+            if field.type == bool:
                 kwargs['type'] = bool
+            elif field.type == float:
+                kwargs['type'] = float
             value = self._settings.value(field.name, **kwargs)
-            logger.debug(f'Loading dataclass preference: {name} field: {field.name} value: {value}')
+            if field.type == Decimal:
+               value = Decimal(value)
+            logger.debug(f'Loading dataclass preference: {name} field: {field.name} value: {value} type: {type(value)}')
             setattr(dataclass, field.name, value)
         self._settings.end_group()
 
@@ -56,14 +61,17 @@ class PreferencesManager:
         self._settings.begin_group(name)
         for field in fields(dataclass):
             value = getattr(dataclass, field.name)
-            logger.debug(f'Saving dataclass preference: {name} field: {field.name} value: {value}')
+            if isinstance(value, Decimal):
+                value = str(value)
+            logger.debug(f'Saving dataclass preference: {name} field: {field.name} value: {value} type: {type(value)}')
             self._settings.set_value(field.name, value)
         self._settings.end_group()
 
     def _load_widget(self, name: str, widget: QWidget):
         self._settings.begin_group(name)
         for attr, method_name in (
-            ('rect', 'set_geometry'),
+            ('rect', 'restore_geometry'),
+            ('state', 'restore_state'),
             ('splitter_settings', 'restore_state'),
             ('recent_file_paths', 'set_file_paths'),
         ):
@@ -77,11 +85,12 @@ class PreferencesManager:
     def _save_widget(self, name: str, widget: QWidget):
         self._settings.begin_group(name)
         for widget_cls, attr, method_name in (
-            (QWidget, 'rect', 'geometry'),
+            (QWidget, 'state', 'save_state'),
+            (QWidget, 'rect', 'save_geometry'),
             (QSplitter, 'splitter_settings', 'save_state'),
             (OpenRecentMenu, 'recent_file_paths', 'paths'),
         ):
-            if not isinstance(widget, widget_cls):
+            if not isinstance(widget, widget_cls) or not hasattr(widget, method_name):
                 continue
             value = getattr(widget, method_name)()
             logger.debug(f'Saving widget preference: {name} attr: {attr} value: {value}')

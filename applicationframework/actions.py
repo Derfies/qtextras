@@ -68,8 +68,8 @@ class Edit(Base):
 
 class SetAttribute(Edit):
 
-    def __init__(self, name, value, *args):
-        super().__init__(*args)
+    def __init__(self, name, value, *args, **kwargs):
+        super().__init__(*args,  **kwargs)
         self.name = name
         self.value = value
         self.old_value = getattr(self.obj, name)

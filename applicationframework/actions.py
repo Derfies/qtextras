@@ -68,7 +68,7 @@ class Edit(Base):
 
 class SetAttribute(Edit):
 
-    def __init__(self, name, value, *args, **kwargs):
+    def __init__(self, name: str, value, *args, **kwargs):
         super().__init__(*args,  **kwargs)
         self.name = name
         self.value = value
@@ -81,6 +81,13 @@ class SetAttribute(Edit):
     def redo(self):
         setattr(self.obj, self.name, self.value)
         return self.flags
+
+
+class SetAttributes(Composite):
+
+    def __init__(self, name: str, value, *objs, **kwargs):
+        actions = [SetAttribute(name, value, obj) for obj in objs]
+        super().__init__(actions, **kwargs)
 
 
 class SetKey(Edit):

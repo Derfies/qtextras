@@ -149,9 +149,6 @@ class MainWindow(QMainWindow):
                 return False
         return True
 
-    def show_event(self, event):
-        self.app().preferences_manager.load()
-
     def close_event(self, event):
         if not self.check_for_save():
             event.ignore()
@@ -163,7 +160,7 @@ class MainWindow(QMainWindow):
         if not self.check_for_save():
             return False
         self.app().doc = self.create_document()
-        self.app().doc.updated(dirty=False)
+        self.app().doc.updated(flags=self.app().doc.new_flags, dirty=False)
         return True
 
     def open_event(self, file_path: str | None | bool = None):
@@ -189,7 +186,9 @@ class MainWindow(QMainWindow):
         self.app().doc.save()
 
         # Don't call doc.updated here as we only really want to update the
-        # window title.
+        # window title. What we would really want is a base update flag that
+        # includes WINDOW as its only member, however we cant subclass Flag
+        # clases...
         self.update_window_title()
 
         return True

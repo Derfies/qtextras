@@ -212,7 +212,7 @@ class EnumProperty(PropertyBase):
         editor.add_items(self.enum_values)
         return editor
 
-    def get_editor_data(self, editor: QSpinBox):
+    def get_editor_data(self, editor: QComboBox):
         return self.enum(editor.current_text())
 
     def set_editor_data(self, editor: QComboBox):

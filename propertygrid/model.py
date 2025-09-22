@@ -167,7 +167,8 @@ class Model(QAbstractItemModel):
             self.add_property(property_cls(key, owner, value, self._root))
         self.end_insert_rows()
 
-    def get_undefined_value(self, value):
+    @staticmethod
+    def get_undefined_value(value):
         uvalue = Undefined()
 
         if isinstance(value, bool):
@@ -179,11 +180,7 @@ class Model(QAbstractItemModel):
         elif isinstance(value, str):
             uvalue = UndefinedString()
         elif isinstance(value, Enum):
-
-            # TODO: Need to go one more level deep and pull together
-            # common enum values.
-            uvalue = UndefinedEnum("Status", {"PENDING": ''}).PENDING
-
+            return UndefinedEnum('UndefinedEnum', {'UNDEFINED': ''}).UNDEFINED
         elif isinstance(value, QColor):
             uvalue = UndefinedColour()
         elif isinstance(value, Gradient):

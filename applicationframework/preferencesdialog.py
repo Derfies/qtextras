@@ -194,6 +194,8 @@ class PreferencesDialog(QDialog):
         # Add the tree view and stacked widget to the content layout.
         self.hsplitter.add_widget(self.tree_view)
         self.hsplitter.add_widget(self.stacked_widget)
+        self.hsplitter.set_stretch_factor(0, 0)
+        self.hsplitter.set_stretch_factor(1, 1)
 
         # Add content layout to the main layout.
         main_layout.add_widget(self.hsplitter)

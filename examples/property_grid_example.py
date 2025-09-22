@@ -30,10 +30,10 @@ DEFAULT_APP_NAME = 'Application Framework'
 
 class EnumValues(Enum):
 
-    ZERO = 0
-    ONE = 1
-    TWO = 2
-    THREE = 3
+    ZERO = '0'
+    ONE = '1'
+    TWO = '2'
+    THREE = '3'
 
 
 @dataclass

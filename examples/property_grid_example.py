@@ -1,19 +1,20 @@
 import logging
 import sys
 from dataclasses import dataclass
+from dataclasses import fields
 from enum import Enum, Flag
 
 import qdarktheme
+from PySide6.QtCore import QModelIndex
 from PySide6.QtGui import QColor, QColorConstants
-from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
-from applicationframework.actions import SetAttribute
+from applicationframework.actions import SetAttributes
 from applicationframework.application import Application
 from applicationframework.contentbase import ContentBase
 from applicationframework.document import Document
 from applicationframework.mainwindow import MainWindow as MainWindowBase
 from gradientwidget.widget import Gradient
-from propertygrid.model import ModelEvent
 from propertygrid.widget import Widget as PropertyGrid
 
 # noinspection PyUnresolvedReferences
@@ -29,21 +30,47 @@ DEFAULT_APP_NAME = 'Application Framework'
 
 class EnumValues(Enum):
 
+    ZERO = '0'
     ONE = '1'
     TWO = '2'
     THREE = '3'
 
 
 @dataclass
+class Data:
+
+    bool_value: bool
+    int_value: int
+    float_value: float
+    string_value: str
+    enum_value: EnumValues
+    colour_property: QColor
+    gradient: Gradient
+
+
 class Content(ContentBase):
 
-    bool_value: bool = True
-    int_value: int = 1
-    float_value: float = 1.0
-    string_value: str = 'one'
-    enum_value: EnumValues = EnumValues.ONE
-    colour_property: QColor = QColorConstants.White
-    gradient: Gradient = Gradient()
+    def __init__(self):
+        self.data = (
+            Data(
+                False,
+                0,
+                0.1,
+                'zero',
+                EnumValues.ZERO,
+                QColorConstants.Red,
+                Gradient(),
+            ),
+            Data(
+                True,
+                1,
+                1.1,
+                'one',
+                EnumValues.ONE,
+                QColorConstants.Blue,
+                Gradient(),
+            ),
+        )
 
     def load(self, file_path: str):
         pass
@@ -65,16 +92,29 @@ class MainWindow(MainWindowBase):
         self.refresh_button = QPushButton('Refresh')
         self.refresh_button.clicked.connect(self.app().doc.updated)
 
-        self.property_grid = PropertyGrid()
-        self.property_grid.model().data_changed.connect(self.on_data_changed)
-        self.property_grid.model().data_changing.connect(self.on_data_changing)
+        self.grid1 = PropertyGrid()
+        self.grid1.model().dataChanged.connect(self.on_data_changed)
+        self.grid1.set_edit_triggers(QAbstractItemView.AllEditTriggers)
 
-        self.layout = QVBoxLayout(self)
-        self.layout.add_widget(self.property_grid)
-        self.layout.add_widget(self.refresh_button)
+        self.grid2 = PropertyGrid()
+        self.grid2.model().dataChanged.connect(self.on_data_changed)
+        self.grid2.set_edit_triggers(QAbstractItemView.AllEditTriggers)
+
+        self.grid3 = PropertyGrid()
+        self.grid3.model().dataChanged.connect(self.on_data_changed)
+        self.grid3.set_edit_triggers(QAbstractItemView.AllEditTriggers)
+
+        self.grid_layout = QHBoxLayout(self)
+        self.grid_layout.add_widget(self.grid1)
+        self.grid_layout.add_widget(self.grid2)
+        self.grid_layout.add_widget(self.grid3)
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.add_layout(self.grid_layout)
+        self.main_layout.add_widget(self.refresh_button)
 
         self.window = QWidget()
-        self.window.set_layout(self.layout)
+        self.window.set_layout(self.main_layout)
         self.set_central_widget(self.window)
 
         self.app().doc.updated(dirty=False)
@@ -85,23 +125,30 @@ class MainWindow(MainWindowBase):
     def update_event(self, doc: Document, flags: UpdateFlag):
         super().update_event(doc, flags)
 
-        self.property_grid.set_object(doc.content)
+        def get_attrs(obj):
+            return {field.name: getattr(obj, field.name) for field in fields(obj)}
 
-    def on_data_changed(self, event: ModelEvent):
-        logger.debug(f'on_data_changed: {event.name()} -> {event.value()}')
-        action = SetAttribute(event.name(), event.value(), event.object())
+        attr1, attr2 = get_attrs(doc.content.data[0]), get_attrs(doc.content.data[1])
+        self.grid1.set_dict(attr1, owner=[doc.content.data[0]])
+        self.grid2.set_dict(attr2, owner=[doc.content.data[1]])
+        self.grid3.set_concurrent_dicts([attr1, attr2], owner=doc.content.data)
+
+    def on_data_changed(self, index: QModelIndex):
+        logger.debug(f'on_data_changed: {index}')
+        prop = index.internal_pointer()
+        action = SetAttributes(prop.name(), prop.value(), *prop.object())
         self.app().action_manager.push(action)
         action()
         self.app().doc.updated()
 
-    def on_data_changing(self, event: ModelEvent):
-        logger.debug(f'on_data_changing: {event.name()} -> {event.value()}')
+    def on_data_changing(self, index: QModelIndex):
+        logger.debug(f'on_data_changed: {index}')
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app = Application(sys.argv)
+    app = Application('foo', 'bar', sys.argv)
     qdarktheme.setup_theme()
-    window = MainWindow(DEFAULT_COMPANY_NAME, DEFAULT_APP_NAME)
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())

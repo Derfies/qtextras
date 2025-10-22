@@ -1,5 +1,4 @@
 ﻿import sys
-import weakref
 from enum import EnumMeta
 
 from PySide6.QtGui import QIcon, QPixmap, Qt
@@ -14,13 +13,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from customwidgets.boolcyclecheckbox import BoolCycleCheckBox
 from gradientwidget.widget import GradientWidget
-from propertygrid.constants import (
-    Undefined,
-    UndefinedBool,
-    UndefinedColour,
-    UndefinedInt,
-)
+from propertygrid.constants import Undefined
 from propertygrid.types import FilePathQImage
 
 
@@ -42,8 +37,14 @@ class PropertyBase:
 
     def __init__(self, name, obj=None, value=None, parent=None, label=None):
         self._name = name
-        if obj is not None:
-           self._ref = weakref.ref(obj)
+
+        # TODO: Not sure why this has to be a weakref, now that I think about
+        # it. I need to be able to load arbitrary key / value dicts now too and
+        # only loading an object is kinda annoying. Why cant we just support a
+        # dict?
+        #if obj is not None:
+        #   self._ref = weakref.ref(obj)
+        self._obj = obj
         self._value = value
         self._parent = parent
         self._label = label
@@ -52,11 +53,17 @@ class PropertyBase:
         if parent is not None:
             parent.add_child(self)
 
+    def object(self) -> str:
+        return self._obj
+
     def name(self) -> str:
         return self._name
 
     def value(self):
         return self._value
+
+    def set_value(self, value):
+        self._value = value
 
     def label(self) -> str:
         return self._label if self._label is not None else self._name
@@ -102,19 +109,30 @@ class PropertyBase:
         raise NotImplementedError
 
 
-
 class BoolProperty(PropertyBase):
 
     modal_editor = False
 
     def create_editor(self, parent) -> QWidget | None:
-        return QCheckBox(parent)
+        return BoolCycleCheckBox(parent)
 
     def get_editor_data(self, editor: QCheckBox):
-        return editor.is_checked()
+        check_state = editor.check_state()
+        if check_state == Qt.PartiallyChecked:
+            return Undefined()
+        elif check_state == Qt.Checked:
+            return True
+        elif check_state == Qt.Unchecked:
+            return False
 
     def set_editor_data(self, editor: QCheckBox):
-        editor.set_checked(self.value())
+        value = self.value()
+        if isinstance(value, Undefined):
+            editor.set_check_state(Qt.PartiallyChecked)
+        elif value:
+            editor.set_check_state(Qt.Checked)
+        else:
+            editor.set_check_state(Qt.Unchecked)
 
     def changed(self, editor: QCheckBox):
         return editor.stateChanged
@@ -126,14 +144,15 @@ class IntProperty(PropertyBase):
 
         # TODO: Expose min / max somewhere.. but how :D
         widget = QSpinBox(parent)
-        widget.set_maximum(20000)
+        widget.set_range(-2 ** 31, 2 ** 31 - 1)
         return widget
 
     def get_editor_data(self, editor: QSpinBox):
         return editor.value()
 
     def set_editor_data(self, editor: QSpinBox):
-        editor.set_value(self.value())
+        if not isinstance(self.value(), Undefined):
+            editor.set_value(self.value())
 
 
 class FloatProperty(PropertyBase):
@@ -151,7 +170,8 @@ class FloatProperty(PropertyBase):
         return editor.value()
 
     def set_editor_data(self, editor: QDoubleSpinBox):
-        editor.set_value(self.value())
+        if not isinstance(self.value(), Undefined):
+            editor.set_value(self.value())
 
 
 class StringProperty(PropertyBase):
@@ -192,11 +212,12 @@ class EnumProperty(PropertyBase):
         editor.add_items(self.enum_values)
         return editor
 
-    def get_editor_data(self, editor: QSpinBox):
+    def get_editor_data(self, editor: QComboBox):
         return self.enum(editor.current_text())
 
     def set_editor_data(self, editor: QComboBox):
-        editor.set_current_text(str(self.value().value))
+        if not isinstance(self.value(), Undefined):
+            editor.set_current_text(str(self.value().value))
 
     def changed(self, editor: QComboBox):
         return editor.currentIndexChanged
@@ -260,7 +281,8 @@ class GradientProperty(PropertyBase):
         return editor.gradient()
 
     def set_editor_data(self, editor: GradientWidget):
-        editor.set_gradient(self.value())
+        if not isinstance(self.value(), Undefined):
+            editor.set_gradient(self.value())
 
     def changing(self, editor: QWidget):
         return editor.gradient_changing

@@ -1,3 +1,4 @@
+from dataclasses import fields
 from decimal import Decimal
 from typing import Any
 
@@ -5,7 +6,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QDoubleValidator, QIntValidator, QValidator
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
+    QDialogButtonBox,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -72,6 +75,13 @@ class ManagedPreferenceWidgetBase(PreferenceWidgetBase):
             value = widget.is_checked()
         elif isinstance(widget, QLineEdit):
             value = widget.text()
+        elif isinstance(widget, QComboBox):
+
+            # TODO: Sanity check me here - is this logical to do?
+            if widget.current_index() < 0:
+                value = None
+            else:
+                value = widget.current_text()
         elif isinstance(widget, ColourPicker):
             value = widget.colour()
         else:
@@ -88,11 +98,14 @@ class ManagedPreferenceWidgetBase(PreferenceWidgetBase):
 
     def _set_widget_value(self, widget: QWidget, value: Any):
         if isinstance(widget, QCheckBox):
-            return widget.set_checked(value)
+            widget.set_checked(value)
         elif isinstance(widget, QLineEdit):
-            return widget.set_text(str(value))
+            widget.set_text(str(value))
+        elif isinstance(widget, QComboBox):
+            index = widget.find_text(value)
+            widget.set_current_index(index)
         elif isinstance(widget, ColourPicker):
-            return widget.set_colour(QColor(*value))
+            widget.set_colour(value)
         else:
             raise Exception(f'Unknown widget type: {widget}')
 
@@ -127,6 +140,26 @@ class ManagedPreferenceWidgetBase(PreferenceWidgetBase):
             self._set_widget_value(widget, value)
 
 
+class DataclassPreferenceWidgetBase(ManagedPreferenceWidgetBase):
+
+    def __init__(self, dataclass, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        widget_cls_map = {
+            str: QLineEdit,
+        }
+
+        # TODO: Can pull a lot of tricky stuff here with the meta field that
+        # dataclasses expose.
+        for field in fields(dataclass):
+            title = self.snake_to_title(field.name)
+            self.add_managed_widget(title, widget_cls_map[field.type](), validator=None, name=field.name)
+
+    @staticmethod
+    def snake_to_title(s: str) -> str:
+        return ' '.join(word.capitalize() for word in s.split('_'))
+
+
 class PreferencesDialog(QDialog):
 
     """
@@ -138,12 +171,11 @@ class PreferencesDialog(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_window_title('Preferences')
-        self.resize(600, 400)
 
         self.widgets = {}
         self.preferences = {}
 
-        # Create the main layout
+        # Create the main layout.
         main_layout = QVBoxLayout(self)
 
         # Create a horizontal layout for the content.
@@ -162,23 +194,17 @@ class PreferencesDialog(QDialog):
         # Add the tree view and stacked widget to the content layout.
         self.hsplitter.add_widget(self.tree_view)
         self.hsplitter.add_widget(self.stacked_widget)
+        self.hsplitter.set_stretch_factor(0, 0)
+        self.hsplitter.set_stretch_factor(1, 1)
 
         # Add content layout to the main layout.
         main_layout.add_widget(self.hsplitter)
 
-        # Add OK and Cancel buttons in a horizontal layout.
-        self.ok_button = QPushButton('OK')
-        self.cancel_button = QPushButton('Cancel')
-        self.ok_button.clicked.connect(self.save_preferences)
-        self.cancel_button.clicked.connect(self.reject)
-
-        button_layout = QHBoxLayout()
-        button_layout.add_spacer_item(QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        button_layout.add_widget(self.ok_button)
-        button_layout.add_widget(self.cancel_button)
-
-        # Anchor the button layout to the bottom.
-        main_layout.add_layout(button_layout)
+        # Add OK and Cancel buttons.
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        buttons.accepted.connect(self.save_preferences)
+        buttons.rejected.connect(self.reject)
+        main_layout.add_widget(buttons)
 
     def add_widget(self, widget: PreferenceWidgetBase, parent=None):
         if parent is None:
@@ -199,7 +225,8 @@ class PreferencesDialog(QDialog):
 
     def load_preferences(self, data: dict):
         for key, value in data.items():
-            self.widgets[key].set_preferences(value)
+            if key in self.widgets:
+                self.widgets[key].set_preferences(value)
 
     def save_preferences(self):
         """Save the preferences when OK is pressed."""

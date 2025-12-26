@@ -1,7 +1,7 @@
 import logging
 import random
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from enum import Enum, Flag
 
 import pyglet
@@ -12,7 +12,7 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QPushButton, QSplitter, QVBoxLayout, QWidget
 from pyglet.gl import glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
 
-from applicationframework.actions import SetAttribute
+from applicationframework.actions import SetAttributes
 from applicationframework.application import Application
 from applicationframework.contentbase import ContentBase
 from applicationframework.document import Document
@@ -107,7 +107,7 @@ class MainWindow(MainWindowBase):
         self.viewport = PygletWidget(640, 480)
 
         self.property_grid = PropertyGrid()
-        self.property_grid.model().data_changed.connect(self.on_data_changed)
+        self.property_grid.model().dataChanged.connect(self.on_data_changed)
 
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.add_widget(self.viewport)
@@ -153,11 +153,14 @@ class MainWindow(MainWindowBase):
     def update_event(self, doc: Document, flags: UpdateFlag):
         super().update_event(doc, flags)
 
-        self.property_grid.set_object(doc.content)
+        def get_attrs(obj):
+            return {field.name: getattr(obj, field.name) for field in fields(obj)}
+
+        self.property_grid.set_dict(get_attrs(doc.content), owner=doc.content)
 
     def on_data_changed(self, index: QModelIndex):
-        item = index.internal_pointer()
-        action = SetAttribute(item.name(), item.new_value(), item._ref())
+        prop = index.internal_pointer()
+        action = SetAttributes(prop.name(), prop.value(), prop.object())
         self.app().action_manager.push(action)
         action()
         self.app().doc.updated()
@@ -165,8 +168,8 @@ class MainWindow(MainWindowBase):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app = Application(sys.argv)
+    app = Application('foo', 'bar', sys.argv)
     qdarktheme.setup_theme()
-    window = MainWindow(DEFAULT_COMPANY_NAME, DEFAULT_APP_NAME)
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())

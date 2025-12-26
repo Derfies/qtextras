@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
         self.edit_menu.add_action(self.copy_action)
         self.edit_menu.add_action(self.paste_action)
 
-    def create_document(self, file_path: str = None) -> Document:
+    def create_document(self, file_path: str = None, **kwargs) -> Document:
         raise NotImplementedError
 
     def update_actions(self):
@@ -159,6 +159,8 @@ class MainWindow(QMainWindow):
     def new_event(self):
         if not self.check_for_save():
             return False
+        # TODO: Allow option box for creating document of specific type.
+
         self.app().doc = self.create_document()
         self.app().doc.updated(flags=self.app().doc.new_flags, dirty=False)
         return True
